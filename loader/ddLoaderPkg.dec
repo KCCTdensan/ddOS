@@ -1,0 +1,5 @@
+[Defines]
+  DEC_SPECIFICATION              = 0x00010005
+  PACKAGE_NAME                   = ddLoaderPkg
+  PACKAGE_GUID                   = 8034bb58-e6cd-4d0c-aeb1-19f1099ea7d6
+  PACKAGE_VERSION                = 0.1

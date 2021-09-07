@@ -3,10 +3,19 @@ set -e
 ## edk2
 cd edk2
 source ./edksetup.sh > /dev/null
-sed -ie '/ACTIVE_PLATFORM/ s/=.*$/= hoge\/fuga.dsc/g;
+sed -ie '/ACTIVE_PLATFORM/ s/=.*$/= ddLoaderPkg\/ddLoaderPkg.dsc/g;
          /TARGET_ARCH/ s/=.*$/= X64/g;
-         /TOOL_CHAIN_TAG/ s/=.*$/= CLANG38/g' Conf/target.txt
-sed -ie '/CLANG38/ s/-flto//g' Conf/tools_def.txt
+         /TOOL_CHAIN_TAG/ s/=.*$/= CLANG38/g;
+         s/\r//g' Conf/target.txt
+sed -ie '/CLANG38/ s/-flto//g;
+         s/\r//g' Conf/tools_def.txt
 cd ..
+
+## comments
+cat <<EOS
+
+  NOTE: To build uefi loader, create symlink or copy of the source to edk2/ddLoaderPkg
+
+EOS
 
 set +e

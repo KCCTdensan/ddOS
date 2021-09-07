@@ -5,3 +5,7 @@
 * ddOS
 
 勉強用
+
+一部Apache License 2.0で配布されているコードを含む
+[[http://www.apache.org/licenses/LICENSE-2.0][Apache License 2.0]]
+[[https://github.com/uchan-nos/mikanos][uchan-nos/mikanos]]

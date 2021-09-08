@@ -20,11 +20,11 @@ private:
 class PixelWriterRGB : public PixelWriter{
 public:
   using PixelWriter::PixelWriter;
-  void Write(int,int,const PixelColor&) override;
+  virtual void Write(int,int,const PixelColor&) override;
 };
 
 class PixelWriterBGR : public PixelWriter{
 public:
   using PixelWriter::PixelWriter;
-  void Write(int,int,const PixelColor&) override;
+  virtual void Write(int,int,const PixelColor&) override;
 };

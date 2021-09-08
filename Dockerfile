@@ -21,7 +21,6 @@ RUN apt-get update \
     llvm-7-dev \
     lld-7 \
     clang-7 \
-    #libc++-7-dev \
     nasm \
     acpica-tools \
     uuid-dev \

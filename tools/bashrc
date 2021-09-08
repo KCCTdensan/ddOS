@@ -11,11 +11,10 @@ sed -ie '/CLANG38/ s/-flto//g;
          s/\r//g' Conf/tools_def.txt
 cd ..
 
-## comments
-cat <<EOS
+## auto create symlink
 
-  NOTE: To build uefi loader, create symlink or copy of the source to edk2/ddLoaderPkg
-
-EOS
+if [ -d src/loader ];then
+  ln -s ../src/loader edk2/ddLoaderPkg
+fi
 
 set +e

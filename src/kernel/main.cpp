@@ -28,6 +28,10 @@ extern "C" void KernelMain(const FBConf& fbconf){
 
   // main loop
 
+  for(int x=0;x<100;x++)
+    for(int y=0;y<100;y++)
+      pixel_writer->Write(x,y,{255,255,0});
+
   while(1){
     __asm__("hlt");
   }

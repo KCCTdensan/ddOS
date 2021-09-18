@@ -5,6 +5,7 @@
 #include "memmap.hpp"
 #include "fb_conf.hpp"
 #include "graphics.hpp"
+#include "font.hpp"
 
 void* operator new(size_t s,void* buf){
   return buf;
@@ -25,12 +26,13 @@ extern "C" void KernelMain(const FBConf& fbconf){
       pixel_writer = new(pixel_writer_buf) PixelWriterBGR(fbconf);
       break;
   }
+  for(int y=0;y<fbconf.res_vert;y++)
+    for(int x=0;x<fbconf.res_horiz;x++)
+      pixel_writer->Write(x,y,{0xe0,0xe0,0xe0});
 
   // main loop
 
-  for(int x=0;x<100;x++)
-    for(int y=0;y<100;y++)
-      pixel_writer->Write(x,y,{255,255,0});
+  WriteFont(*pixel_writer,0,0,'A',{0,0,0});
 
   while(1){
     __asm__("hlt");

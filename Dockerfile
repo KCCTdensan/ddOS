@@ -127,7 +127,7 @@ ENV CPPFLAGS="\
 ENV LDFLAGS="-L$HOMEDIR/mikanos_libs/x86_64-elf/lib"
 
 ### .bashrc
-COPY tools/bashrc $HOMEDIR/.bashrc
+COPY docker.bashrc $HOMEDIR/.bashrc
 
 ## RUN
 

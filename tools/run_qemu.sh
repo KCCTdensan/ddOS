@@ -21,16 +21,16 @@ qemu-img create -f raw $DISK_IMG 200M
 mkfs.fat -n 'DDOS' -s 2 -f 2 -R 32 -F 32 $DISK_IMG
 
 mkdir -p $MOUNT_POINT
-sudo mount -o loop $DISK_IMG $MOUNT_POINT
+doas mount -o loop $DISK_IMG $MOUNT_POINT
 
-sudo mkdir -p $MOUNT_POINT/EFI/BOOT
-sudo cp $EFI_FILE $MOUNT_POINT/EFI/BOOT/BOOTX64.EFI
+doas mkdir -p $MOUNT_POINT/EFI/BOOT
+doas cp $EFI_FILE $MOUNT_POINT/EFI/BOOT/BOOTX64.EFI
 if [ "x$ANOTHER_FILE" != "x" ];then
-  sudo cp $ANOTHER_FILE $MOUNT_POINT/
+  doas cp $ANOTHER_FILE $MOUNT_POINT/
 fi
 
 sleep 0.5
-sudo umount $MOUNT_POINT
+doas umount $MOUNT_POINT
 
 qemu-system-x86_64 \
   -m 1G \

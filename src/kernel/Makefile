@@ -1,5 +1,5 @@
 TARGET = kernel.elf
-OBJS = main.o graphics.o fontascii.o
+OBJS = main.o graphics.o font.o fontascii.o
 #        usb/memory.o usb/device.o usb/xhci/ring.o usb/xhci/trb.o usb/xhci/xhci.o \
 #        usb/xhci/port.o usb/xhci/device.o usb/xhci/devmgr.o usb/xhci/registers.o \
 #        usb/classdriver/base.o usb/classdriver/hid.o usb/classdriver/keyboard.o \
@@ -43,7 +43,7 @@ kernel.elf: $(OBJS) Makefile
 	nasm -f elf64 -o $@ $<
 
 fontascii.bin: fontascii.bdf
-	../../tools/bdf2bin.py $< $@
+	../assets/bdf2bin.py $< $@
 
 fontascii.o: fontascii.bin
 	objcopy -I binary -O elf64-x86-64 -B i386:x86-64 $< $@

@@ -1,9 +1,11 @@
 TARGET = kernel.elf
-OBJS = main.o graphics.o font.o fontascii.o console.o newlib_support.o
-#        usb/memory.o usb/device.o usb/xhci/ring.o usb/xhci/trb.o usb/xhci/xhci.o \
-#        usb/xhci/port.o usb/xhci/device.o usb/xhci/devmgr.o usb/xhci/registers.o \
-#        usb/classdriver/base.o usb/classdriver/hid.o usb/classdriver/keyboard.o \
-#        usb/classdriver/mouse.o usb/classdriver/cdc.o
+OBJS = main.o newlib_support.o \
+       graphics.o font.o fontascii.o console.o \
+       driver/asmfunc.o driver/pci.o \
+       driver/usb/memory.o driver/usb/device.o driver/usb/xhci/ring.o driver/usb/xhci/trb.o \
+       driver/usb/xhci/xhci.o driver/usb/xhci/port.o driver/usb/xhci/device.o driver/usb/xhci/devmgr.o \
+       driver/usb/xhci/registers.o driver/usb/classdriver/base.o driver/usb/classdriver/hid.o \
+       driver/usb/classdriver/keyboard.o driver/usb/classdriver/mouse.o driver/usb/classdriver/cdc.o
 DEPENDS = $(join $(dir $(OBJS)),$(addprefix .,$(notdir $(OBJS:.o=.d))))
 
 CPPFLAGS += -I.

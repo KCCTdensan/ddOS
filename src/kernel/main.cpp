@@ -44,9 +44,6 @@ extern "C" void KernelMain(const FBConf& fbconf){
       pixel_writer = new(pixel_writer_buf) PixelWriterBGR(fbconf);
       break;
   }
-  for(int y=0;y<fbconf.res_vert;y++)
-    for(int x=0;x<fbconf.res_horiz;x++)
-      pixel_writer->Write(x,y,{0,0,0});
 
   // kConsole
   kConsole = new(kConsole_buf) Console(

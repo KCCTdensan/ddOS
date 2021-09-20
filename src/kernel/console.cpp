@@ -2,11 +2,14 @@
 
 #include "console.hpp"
 
-#define min(a,b) (a)<(b)?(a):(b)
+template<typename T>
+inline const T& min(const T& a,const T& b){
+  return a<b?a:b;
+}
 
 Console::Console(PixelWriter& writer_,
-                 int horiz_,int vert_,
-                 int x_,int y_,
+                 unsigned int horiz_,unsigned int vert_,
+                 unsigned int x_,unsigned int y_,
                  const PixelColor& bg_color_,
                  const PixelColor& text_color_) :
     pixel_writer(writer_),
@@ -15,19 +18,19 @@ Console::Console(PixelWriter& writer_,
     cursor_col(0),
     cursor_row(0),
     text_buf(){
-  col=min(horiz_/FONT_WIDTH,CONSOLE_BUF_MAX_COL);
-  row=min(vert_/FONT_HEIGHT,CONSOLE_BUF_MAX_ROW);
+  col=min(CONSOLE_BUF_MAX_COL,(unsigned int)horiz_/FONT_WIDTH);
+  row=min(CONSOLE_BUF_MAX_ROW,(unsigned int)vert_/FONT_HEIGHT);
   buf_x=FONT_WIDTH*col;
   buf_y=FONT_HEIGHT*row;
   start_x=x_+(horiz_-buf_x)/2;
   start_y=y_+(vert_-buf_y)/2;
 
-  for(int y=y_;y<y_+vert_;y++)
-    for(int x=x_;x<x_+horiz_;x++)
-      pixel_writer.Write(x,y,CONSOLE_BG);
-  for(int y=start_y;y<start_y+buf_y;y++)
-    for(int x=start_x;x<start_x+buf_x;x++)
-      pixel_writer.Write(x,y,bg_color);
+  FillRectangle(pixel_writer,
+                {x_,y_},{horiz_,vert_},
+                CONSOLE_BG);
+  FillRectangle(pixel_writer,
+                {start_x,start_y},{buf_x,buf_y},
+                bg_color);
 }
 
 void Console::PutStr(const char* s){
@@ -59,10 +62,10 @@ void Console::PutNL(){
   if(cursor_row<row-1)
     cursor_row++;
   else{
-    for(int y=start_y;y<start_y+buf_y;y++)
-      for(int x=start_x;x<start_x+buf_x;x++)
-        pixel_writer.Write(x,y,bg_color);
-    int x,y;const char* s;
+    FillRectangle(pixel_writer,
+                  {start_x,start_y},{buf_x,buf_y},
+                  bg_color);
+    unsigned int x,y;const char* s;
     for(cursor_row=0;cursor_row<row-1;cursor_row++){
       memcpy(text_buf[cursor_row],text_buf[cursor_row+1],col);
       x=0,y=start_y+FONT_HEIGHT*cursor_row;

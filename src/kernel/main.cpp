@@ -1,21 +1,39 @@
 #include <cstdint>
 #include <cstddef>
+#include <cstdio>
 
 #include "elf.hpp"
 #include "memmap.hpp"
 #include "fb_conf.hpp"
 #include "graphics.hpp"
 #include "font.hpp"
+#include "console.hpp"
+
+Console* kConsole;
+char kConsole_buf[sizeof(Console)];
 
 void* operator new(size_t s,void* buf){
   return buf;
 }
 void operator delete(void* obj){} // なんか要るらしい
 
+int printk(const char* fmt,...){
+  va_list ap;
+  int res;
+  char s[1024];
+
+  va_start(ap,fmt);
+  res=vsprintf(s,fmt,ap);
+  va_end(ap);
+
+  kConsole->PutStr(s);
+  return res;
+}
+
 extern "C" void KernelMain(const FBConf& fbconf){
+  InitValsFont();
 
-  // グラフィック
-
+  // pixel_writer
   PixelWriter* pixel_writer;
   char pixel_writer_buf[sizeof(PixelWriterRGB)];
   switch(fbconf.pixel_fmt){
@@ -28,11 +46,19 @@ extern "C" void KernelMain(const FBConf& fbconf){
   }
   for(int y=0;y<fbconf.res_vert;y++)
     for(int x=0;x<fbconf.res_horiz;x++)
-      pixel_writer->Write(x,y,{0xe0,0xe0,0xe0});
+      pixel_writer->Write(x,y,{0,0,0});
+
+  // kConsole
+  kConsole = new(kConsole_buf) Console(
+      *pixel_writer,
+      fbconf.res_horiz-8,
+      fbconf.res_vert-8,
+      4,4,
+      {0,0,0},{0x20,0xff,0x20});
 
   // main loop
 
-  WriteFont(*pixel_writer,0,0,'A',{0,0,0});
+  printk("Hello.\n");
 
   while(1){
     __asm__("hlt");

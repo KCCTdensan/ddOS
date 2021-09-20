@@ -10,7 +10,7 @@ class PixelWriter{
 public:
   PixelWriter(const FBConf& conf) : fbconf(conf){};
   virtual ~PixelWriter() = default;
-  virtual void Write(int,int,const PixelColor&) = 0; // Write(x,y,color);
+  virtual void Write(int x,int y,const PixelColor& c) = 0; // Write(x,y,color);
 protected:
   uint8_t* PixelAt(int,int);
 private:

@@ -1,5 +1,5 @@
 TARGET = kernel.elf
-OBJS = main.o graphics.o font.o fontascii.o
+OBJS = main.o graphics.o font.o fontascii.o console.o newlib_support.o
 #        usb/memory.o usb/device.o usb/xhci/ring.o usb/xhci/trb.o usb/xhci/xhci.o \
 #        usb/xhci/port.o usb/xhci/device.o usb/xhci/devmgr.o usb/xhci/registers.o \
 #        usb/classdriver/base.o usb/classdriver/hid.o usb/classdriver/keyboard.o \
@@ -21,7 +21,7 @@ clean:
 	rm -rf *.o
 
 kernel.elf: $(OBJS) Makefile
-	ld.lld $(LDFLAGS) -o kernel.elf $(OBJS) #-lc -lc++ -lc++abi -lm -lfreetype
+	ld.lld $(LDFLAGS) -o kernel.elf $(OBJS) -lc #-lc++ -lc++abi -lm -lfreetype
 
 %.o: %.cpp Makefile
 	clang++ $(CPPFLAGS) $(CXXFLAGS) -c $< -o $@

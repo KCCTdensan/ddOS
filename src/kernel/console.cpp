@@ -7,19 +7,19 @@ inline const T& min(const T& a,const T& b){
   return a<b?a:b;
 }
 
-Console::Console(PixelWriter& writer_,
-                 unsigned int horiz_,unsigned int vert_,
-                 unsigned int x_,unsigned int y_,
-                 const PixelColor& bg_color_,
-                 const PixelColor& text_color_) :
+kConsole::kConsole(PixelWriter& writer_,
+                   unsigned int horiz_,unsigned int vert_,
+                   unsigned int x_,unsigned int y_,
+                   const PixelColor& bg_color_,
+                   const PixelColor& text_color_) :
     pixel_writer(writer_),
     bg_color(bg_color_),
     text_color(text_color_),
     cursor_col(0),
     cursor_row(0),
     text_buf(){
-  col=min(CONSOLE_BUF_MAX_COL,(unsigned int)horiz_/FONT_WIDTH);
-  row=min(CONSOLE_BUF_MAX_ROW,(unsigned int)vert_/FONT_HEIGHT);
+  col=min(KCONSOLE_BUF_MAX_COL,(unsigned int)horiz_/FONT_WIDTH);
+  row=min(KCONSOLE_BUF_MAX_ROW,(unsigned int)vert_/FONT_HEIGHT);
   buf_x=FONT_WIDTH*col;
   buf_y=FONT_HEIGHT*row;
   start_x=x_+(horiz_-buf_x)/2;
@@ -27,13 +27,13 @@ Console::Console(PixelWriter& writer_,
 
   FillRectangle(pixel_writer,
                 {x_,y_},{horiz_,vert_},
-                CONSOLE_BG);
+                KCONSOLE_BG);
   FillRectangle(pixel_writer,
                 {start_x,start_y},{buf_x,buf_y},
                 bg_color);
 }
 
-void Console::PutStr(const char* s){
+void kConsole::PutStr(const char* s){
   int x=start_x+FONT_WIDTH*cursor_col,
       y=start_y+FONT_HEIGHT*cursor_row;
   for(;*s;s++)
@@ -57,7 +57,7 @@ void Console::PutStr(const char* s){
     }
 }
 
-void Console::PutNL(){
+void kConsole::PutNL(){
   cursor_col=0;
   if(cursor_row<row-1)
     cursor_row++;

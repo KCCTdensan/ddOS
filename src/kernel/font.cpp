@@ -32,7 +32,7 @@ void FontAscii_writer(PixelWriter& writer,
 
 // 共通
 
-void InitValsFont(){
+void InitFont(){
   const FontAscii_font* font_ascii=
     reinterpret_cast<const FontAscii_font*>(&_binary_fontascii_bin_start);
   FONT_WIDTH=font_ascii->width;

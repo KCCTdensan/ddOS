@@ -4,7 +4,7 @@
 #include <cstdlib>
 #include <iterator>
 
-#include "logger.hpp"
+#include "log.hpp"
 #include "../device.hpp"
 
 namespace usb::cdc {
@@ -12,11 +12,11 @@ namespace usb::cdc {
                        const InterfaceDescriptor* if_data) : ClassDriver{dev} {
   }
 
-  Error CDCDriver::Initialize() {
-    return MAKE_ERROR(Error::kNotImplemented);
+  kError CDCDriver::Initialize() {
+    return KernelError(kError::kNotImplemented);
   }
 
-  Error CDCDriver::SetEndpoint(const std::vector<EndpointConfig>& configs) {
+  kError CDCDriver::SetEndpoint(const std::vector<EndpointConfig>& configs) {
     for (const auto& config : configs) {
       if (config.ep_type == EndpointType::kInterrupt && config.ep_id.IsIn()) {
         ep_interrupt_in_ = config.ep_id;
@@ -26,45 +26,45 @@ namespace usb::cdc {
         ep_bulk_out_ = config.ep_id;
       }
     }
-    return MAKE_ERROR(Error::kSuccess);
+    return KernelError(kError::kSuccess);
   }
 
-  Error CDCDriver::OnEndpointsConfigured() {
-    return MAKE_ERROR(Error::kSuccess);
+  kError CDCDriver::OnEndpointsConfigured() {
+    return KernelError(kError::kSuccess);
   }
 
-  Error CDCDriver::OnControlCompleted(EndpointID ep_id, SetupData setup_data,
+  kError CDCDriver::OnControlCompleted(EndpointID ep_id, SetupData setup_data,
                            const void* buf, int len) {
-    return MAKE_ERROR(Error::kNotImplemented);
+    return KernelError(kError::kNotImplemented);
   }
 
-  Error CDCDriver::OnNormalCompleted(EndpointID ep_id, const void* buf, int len) {
-    Log(kDebug, "CDCDriver::OnNormalCompleted: buf='%.*s'\n", len, buf);
+  kError CDCDriver::OnNormalCompleted(EndpointID ep_id, const void* buf, int len) {
+    PutLog(kLogDebug, "CDCDriver::OnNormalCompleted: buf='%.*s'\n", len, buf);
     auto buf8 = reinterpret_cast<const uint8_t*>(buf);
     if (ep_id == ep_bulk_in_) {
       std::copy_n(buf8, len, std::back_inserter(receive_buf_));
     } else if (ep_id == ep_bulk_out_) {
     } else {
-      return MAKE_ERROR(Error::kEndpointNotInCharge);
+      return KernelError(kError::kEndpointNotInCharge);
     }
     delete[] buf8;
-    return MAKE_ERROR(Error::kSuccess);
+    return KernelError(kError::kSuccess);
   }
 
-  Error CDCDriver::SendSerial(const void* buf, int len) {
+  kError CDCDriver::SendSerial(const void* buf, int len) {
     uint8_t* buf_out = new uint8_t[len];
     memcpy(buf_out, buf, len);
     if (auto err = ParentDevice()->NormalOut(ep_bulk_out_, buf_out, len)) {
-      Log(kError, "%s:%d: NormalOut failed: %s\n", err.File(), err.Line(), err.Name());
+      PutLog(kLogError, "%s:%d: NormalOut failed: %s\n", err.File(), err.Line(), err.Name());
       return err;
     }
 
     uint8_t* buf_in = new uint8_t[8];
     if (auto err = ParentDevice()->NormalIn(ep_bulk_in_, buf_in, 8)) {
-      Log(kError, "%s:%d: NormalIn failed: %s\n", err.File(), err.Line(), err.Name());
+      PutLog(kLogError, "%s:%d: NormalIn failed: %s\n", err.File(), err.Line(), err.Name());
       return err;
     }
-    return MAKE_ERROR(Error::kSuccess);
+    return KernelError(kError::kSuccess);
   }
 
   int CDCDriver::ReceiveSerial(void* buf, int len) {

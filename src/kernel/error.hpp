@@ -7,14 +7,68 @@ public:
   enum Code {
     kSuccess,
     kFull,
+    kEmpty,
+    kNoEnoughMemory,
     kIndexOutOfRange,
+    kHostControllerNotHalted,
+    kInvalidSlotID,
+    kPortNotConnected,
+    kInvalidEndpointNumber,
+    kTransferRingNotSet,
+    kAlreadyAllocated,
+    kNotImplemented,
+    kInvalidDescriptor,
+    kBufferTooSmall,
+    kUnknownDevice,
+    kNoCorrespondingSetupStage,
+    kTransferFailed,
+    kInvalidPhase,
+    kUnknownXHCISpeedID,
+    kNoWaiter,
+    kNoPCIMSI,
+    kUnknownPixelFormat,
+    kNoSuchTask,
+    kInvalidFormat,
+    kFrameTooSmall,
+    kInvalidFile,
+    kIsDirectory,
+    kNoSuchEntry,
+    kFreeTypeError,
+    kEndpointNotInCharge,
     EOC // End Of Codes
   };
 private:
   static constexpr std::array CodeNames {
     "kSuccess",
     "kFull",
+    "kEmpty",
+    "kNoEnoughMemory",
     "kIndexOutOfRange",
+    "kHostControllerNotHalted",
+    "kInvalidSlotID",
+    "kPortNotConnected",
+    "kInvalidEndpointNumber",
+    "kTransferRingNotSet",
+    "kAlreadyAllocated",
+    "kNotImplemented",
+    "kInvalidDescriptor",
+    "kBufferTooSmall",
+    "kUnknownDevice",
+    "kNoCorrespondingSetupStage",
+    "kTransferFailed",
+    "kInvalidPhase",
+    "kUnknownXHCISpeedID",
+    "kNoWaiter",
+    "kNoPCIMSI",
+    "kUnknownPixelFormat",
+    "kNoSuchTask",
+    "kInvalidFormat",
+    "kFrameTooSmall",
+    "kInvalidFile",
+    "kIsDirectory",
+    "kNoSuchEntry",
+    "kFreeTypeError",
+    "kEndpointNotInCharge",
   };
   static_assert(Code::EOC==CodeNames.size());
 
@@ -23,6 +77,9 @@ public:
   //   : code(code_),file(file_),line(line_){};
   kError(Code code_) : code(code_){};
 
+  Code Cause() const {
+    return this->code;
+  }
   const char* Name() const {
     return CodeNames[code];
   }

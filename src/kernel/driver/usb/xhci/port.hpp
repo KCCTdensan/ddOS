@@ -36,7 +36,7 @@ namespace usb::xhci {
     bool IsConnectStatusChanged() const;
     bool IsPortResetChanged() const;
     int Speed() const;
-    Error Reset();
+    kError Reset();
     Device* Initialize();
 
     void ClearConnectStatusChanged() const {

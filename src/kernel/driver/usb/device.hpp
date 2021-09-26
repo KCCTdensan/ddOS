@@ -20,25 +20,25 @@ namespace usb {
   class Device {
    public:
     virtual ~Device();
-    virtual Error ControlIn(EndpointID ep_id, SetupData setup_data,
+    virtual kError ControlIn(EndpointID ep_id, SetupData setup_data,
                             void* buf, int len, ClassDriver* issuer);
-    virtual Error ControlOut(EndpointID ep_id, SetupData setup_data,
+    virtual kError ControlOut(EndpointID ep_id, SetupData setup_data,
                              const void* buf, int len, ClassDriver* issuer);
-    virtual Error NormalIn(EndpointID ep_id, void* buf, int len);
-    virtual Error NormalOut(EndpointID ep_id, const void* buf, int len);
+    virtual kError NormalIn(EndpointID ep_id, void* buf, int len);
+    virtual kError NormalOut(EndpointID ep_id, const void* buf, int len);
 
-    Error StartInitialize();
+    kError StartInitialize();
     bool IsInitialized() { return is_initialized_; }
     auto& EndpointConfigs() const { return ep_configs_; }
-    Error OnEndpointsConfigured();
+    kError OnEndpointsConfigured();
 
     uint8_t* Buffer() { return buf_.data(); }
     const DeviceDescriptor& DeviceDesc() const { return device_desc_; }
 
    protected:
-    Error OnControlCompleted(EndpointID ep_id, SetupData setup_data,
+    kError OnControlCompleted(EndpointID ep_id, SetupData setup_data,
                              const void* buf, int len);
-    Error OnNormalCompleted(EndpointID ep_id, const void* buf, int len);
+    kError OnNormalCompleted(EndpointID ep_id, const void* buf, int len);
 
    private:
     std::vector<ClassDriver*> class_drivers_{};
@@ -50,17 +50,17 @@ namespace usb {
     uint8_t num_configurations_;
     uint8_t config_index_;
 
-    Error OnDeviceDescriptorReceived(const uint8_t* buf, int len);
-    Error OnConfigurationDescriptorReceived(const uint8_t* buf, int len);
-    Error OnSetConfigurationCompleted(uint8_t config_value);
+    kError OnDeviceDescriptorReceived(const uint8_t* buf, int len);
+    kError OnConfigurationDescriptorReceived(const uint8_t* buf, int len);
+    kError OnSetConfigurationCompleted(uint8_t config_value);
 
     bool is_initialized_ = false;
     int initialize_phase_ = 0;
     std::vector<EndpointConfig> ep_configs_{};
-    Error InitializePhase1(const uint8_t* buf, int len);
-    Error InitializePhase2(const uint8_t* buf, int len);
-    Error InitializePhase3(uint8_t config_value);
-    Error InitializePhase4();
+    kError InitializePhase1(const uint8_t* buf, int len);
+    kError InitializePhase2(const uint8_t* buf, int len);
+    kError InitializePhase3(uint8_t config_value);
+    kError InitializePhase4();
 
     /** OnControlCompleted の中で要求の発行元を特定するためのマップ構造．
      * ControlOut または ControlIn を発行したときに発行元が登録される．
@@ -68,9 +68,9 @@ namespace usb {
     ArrayMap<SetupData, ClassDriver*, 4> event_waiters_{};
   };
 
-  Error GetDescriptor(Device& dev, EndpointID ep_id,
+  kError GetDescriptor(Device& dev, EndpointID ep_id,
                       uint8_t desc_type, uint8_t desc_index,
                       void* buf, int len, bool debug = false);
-  Error SetConfiguration(Device& dev, EndpointID ep_id,
+  kError SetConfiguration(Device& dev, EndpointID ep_id,
                          uint8_t config_value, bool debug = false);
 }

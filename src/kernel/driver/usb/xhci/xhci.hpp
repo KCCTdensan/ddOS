@@ -18,8 +18,8 @@ namespace usb::xhci {
   class Controller {
    public:
     Controller(uintptr_t mmio_base);
-    Error Initialize();
-    Error Run();
+    kError Initialize();
+    kError Run();
     Ring* CommandRing() { return &cr_; }
     EventRing* PrimaryEventRing() { return &er_; }
     DoorbellRegister* DoorbellRegisterAt(uint8_t index);
@@ -54,17 +54,17 @@ namespace usb::xhci {
     }
   };
 
-  Error ConfigurePort(Controller& xhc, Port& port);
-  Error ConfigureEndpoints(Controller& xhc, Device& dev);
+  kError ConfigurePort(Controller& xhc, Port& port);
+  kError ConfigureEndpoints(Controller& xhc, Device& dev);
 
   /** @brief イベントリングに登録されたイベントを高々1つ処理する．
    *
    * xhc のプライマリイベントリングの先頭のイベントを処理する．
-   * イベントが無ければ即座に Error::kSuccess を返す．
+   * イベントが無ければ即座に kError::kSuccess を返す．
    *
-   * @return イベントを正常に処理できたら Error::kSuccess
+   * @return イベントを正常に処理できたら kError::kSuccess
    */
-  Error ProcessEvent(Controller& xhc);
+  kError ProcessEvent(Controller& xhc);
 
   extern Controller* controller;
   void Initialize();

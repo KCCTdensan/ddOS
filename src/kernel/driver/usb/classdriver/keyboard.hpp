@@ -17,7 +17,7 @@ namespace usb {
     void* operator new(size_t size);
     void operator delete(void* ptr) noexcept;
 
-    Error OnDataReceived() override;
+    kError OnDataReceived() override;
 
     using ObserverType = void (uint8_t modifier, uint8_t keycode, bool press);
     void SubscribeKeyPush(std::function<ObserverType> observer);

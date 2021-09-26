@@ -17,7 +17,7 @@ namespace usb {
     void* operator new(size_t size);
     void operator delete(void* ptr) noexcept;
 
-    Error OnDataReceived() override;
+    kError OnDataReceived() override;
 
     using ObserverType = void (uint8_t buttons, int8_t displacement_x, int8_t displacement_y);
     void SubscribeMouseMove(std::function<ObserverType> observer);

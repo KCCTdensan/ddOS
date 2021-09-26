@@ -1,7 +1,7 @@
 #include "xhci.hpp"
 
 #include <cstring>
-#include "logger.hpp"
+#include "log.hpp"
 #include "pci.hpp"
 #include "interrupt.hpp"
 #include "timer.hpp"
@@ -13,14 +13,14 @@
 namespace {
   using namespace usb::xhci;
 
-  Error RegisterCommandRing(Ring* ring, MemMapRegister<CRCR_Bitmap>* crcr) {
+  kError RegisterCommandRing(Ring* ring, MemMapRegister<CRCR_Bitmap>* crcr) {
     CRCR_Bitmap value = crcr->Read();
     value.bits.ring_cycle_state = true;
     value.bits.command_stop = false;
     value.bits.command_abort = false;
     value.SetPointer(reinterpret_cast<uint64_t>(ring->Buffer()));
     crcr->Write(value);
-    return MAKE_ERROR(Error::kSuccess);
+    return KernelError(kError::kSuccess);
   }
 
   enum class ConfigPhase {
@@ -111,13 +111,13 @@ namespace {
     ctx.bits.error_count = 3;
   }
 
-  Error ResetPort(Controller& xhc, Port& port) {
+  kError ResetPort(Controller& xhc, Port& port) {
     const bool is_connected = port.IsConnected();
-    Log(kDebug, "ResetPort: port.IsConnected() = %s\n",
+    PutLog(kLogDebug, "ResetPort: port.IsConnected() = %s\n",
         is_connected ? "true" : "false");
 
     if (!is_connected) {
-      return MAKE_ERROR(Error::kSuccess);
+      return KernelError(kError::kSuccess);
     }
 
     if (addressing_port != 0) {
@@ -126,19 +126,19 @@ namespace {
       const auto port_phase = port_config_phase[port.Number()];
       if (port_phase != ConfigPhase::kNotConnected &&
           port_phase != ConfigPhase::kWaitingAddressed) {
-        return MAKE_ERROR(Error::kInvalidPhase);
+        return KernelError(kError::kInvalidPhase);
       }
       addressing_port = port.Number();
       port_config_phase[port.Number()] = ConfigPhase::kResettingPort;
       port.Reset();
     }
-    return MAKE_ERROR(Error::kSuccess);
+    return KernelError(kError::kSuccess);
   }
 
-  Error EnableSlot(Controller& xhc, Port& port) {
+  kError EnableSlot(Controller& xhc, Port& port) {
     const bool is_enabled = port.IsEnabled();
     const bool reset_completed = port.IsPortResetChanged();
-    Log(kDebug, "EnableSlot: port.IsEnabled() = %s, port.IsPortResetChanged() = %s\n",
+    PutLog(kLogDebug, "EnableSlot: port.IsEnabled() = %s, port.IsPortResetChanged() = %s\n",
         is_enabled ? "true" : "false",
         reset_completed ? "true" : "false");
 
@@ -151,17 +151,17 @@ namespace {
       xhc.CommandRing()->Push(cmd);
       xhc.DoorbellRegisterAt(0)->Ring(0);
     }
-    return MAKE_ERROR(Error::kSuccess);
+    return KernelError(kError::kSuccess);
   }
 
-  Error AddressDevice(Controller& xhc, uint8_t port_id, uint8_t slot_id) {
-    Log(kDebug, "AddressDevice: port_id = %d, slot_id = %d\n", port_id, slot_id);
+  kError AddressDevice(Controller& xhc, uint8_t port_id, uint8_t slot_id) {
+    PutLog(kLogDebug, "AddressDevice: port_id = %d, slot_id = %d\n", port_id, slot_id);
 
     xhc.DeviceManager()->AllocDevice(slot_id, xhc.DoorbellRegisterAt(slot_id));
 
     Device* dev = xhc.DeviceManager()->FindBySlot(slot_id);
     if (dev == nullptr) {
-      return MAKE_ERROR(Error::kInvalidSlotID);
+      return KernelError(kError::kInvalidSlotID);
     }
 
     memset(&dev->InputContext()->input_control_context, 0,
@@ -186,39 +186,39 @@ namespace {
     xhc.CommandRing()->Push(addr_dev_cmd);
     xhc.DoorbellRegisterAt(0)->Ring(0);
 
-    return MAKE_ERROR(Error::kSuccess);
+    return KernelError(kError::kSuccess);
   }
 
-  Error InitializeDevice(Controller& xhc, uint8_t port_id, uint8_t slot_id) {
-    Log(kDebug, "InitializeDevice: port_id = %d, slot_id = %d\n", port_id, slot_id);
+  kError InitializeDevice(Controller& xhc, uint8_t port_id, uint8_t slot_id) {
+    PutLog(kLogDebug, "InitializeDevice: port_id = %d, slot_id = %d\n", port_id, slot_id);
 
     auto dev = xhc.DeviceManager()->FindBySlot(slot_id);
     if (dev == nullptr) {
-      return MAKE_ERROR(Error::kInvalidSlotID);
+      return KernelError(kError::kInvalidSlotID);
     }
 
     port_config_phase[port_id] = ConfigPhase::kInitializingDevice;
     dev->StartInitialize();
 
-    return MAKE_ERROR(Error::kSuccess);
+    return KernelError(kError::kSuccess);
   }
 
-  Error CompleteConfiguration(Controller& xhc, uint8_t port_id, uint8_t slot_id) {
-    Log(kDebug, "CompleteConfiguration: port_id = %d, slot_id = %d\n", port_id, slot_id);
+  kError CompleteConfiguration(Controller& xhc, uint8_t port_id, uint8_t slot_id) {
+    PutLog(kLogDebug, "CompleteConfiguration: port_id = %d, slot_id = %d\n", port_id, slot_id);
 
     auto dev = xhc.DeviceManager()->FindBySlot(slot_id);
     if (dev == nullptr) {
-      return MAKE_ERROR(Error::kInvalidSlotID);
+      return KernelError(kError::kInvalidSlotID);
     }
 
     dev->OnEndpointsConfigured();
 
     port_config_phase[port_id] = ConfigPhase::kConfigured;
-    return MAKE_ERROR(Error::kSuccess);
+    return KernelError(kError::kSuccess);
   }
 
-  Error OnEvent(Controller& xhc, PortStatusChangeEventTRB& trb) {
-    Log(kDebug, "PortStatusChangeEvent: port_id = %d\n", trb.bits.port_id);
+  kError OnEvent(Controller& xhc, PortStatusChangeEventTRB& trb) {
+    PutLog(kLogDebug, "PortStatusChangeEvent: port_id = %d\n", trb.bits.port_id);
     auto port_id = trb.bits.port_id;
     auto port = xhc.PortAt(port_id);
 
@@ -228,15 +228,15 @@ namespace {
     case ConfigPhase::kResettingPort:
       return EnableSlot(xhc, port);
     default:
-      return MAKE_ERROR(Error::kInvalidPhase);
+      return KernelError(kError::kInvalidPhase);
     }
   }
 
-  Error OnEvent(Controller& xhc, TransferEventTRB& trb) {
+  kError OnEvent(Controller& xhc, TransferEventTRB& trb) {
     const uint8_t slot_id = trb.bits.slot_id;
     auto dev = xhc.DeviceManager()->FindBySlot(slot_id);
     if (dev == nullptr) {
-      return MAKE_ERROR(Error::kInvalidSlotID);
+      return KernelError(kError::kInvalidSlotID);
     }
     if (auto err = dev->OnTransferEventReceived(trb)) {
       return err;
@@ -250,34 +250,34 @@ namespace {
         port_config_phase[port_id] == ConfigPhase::kInitializingDevice) {
       return ConfigureEndpoints(xhc, *dev);
     }
-    return MAKE_ERROR(Error::kSuccess);
+    return KernelError(kError::kSuccess);
   }
 
-  Error OnEvent(Controller& xhc, CommandCompletionEventTRB& trb) {
+  kError OnEvent(Controller& xhc, CommandCompletionEventTRB& trb) {
     const auto issuer_type = trb.Pointer()->bits.trb_type;
     const auto slot_id = trb.bits.slot_id;
-    Log(kDebug, "CommandCompletionEvent: slot_id = %d, issuer = %s\n",
+    PutLog(kLogDebug, "CommandCompletionEvent: slot_id = %d, issuer = %s\n",
         trb.bits.slot_id, kTRBTypeToName[issuer_type]);
 
     if (issuer_type == EnableSlotCommandTRB::Type) {
       if (port_config_phase[addressing_port] != ConfigPhase::kEnablingSlot) {
-        return MAKE_ERROR(Error::kInvalidPhase);
+        return KernelError(kError::kInvalidPhase);
       }
 
       return AddressDevice(xhc, addressing_port, slot_id);
     } else if (issuer_type == AddressDeviceCommandTRB::Type) {
       auto dev = xhc.DeviceManager()->FindBySlot(slot_id);
       if (dev == nullptr) {
-        return MAKE_ERROR(Error::kInvalidSlotID);
+        return KernelError(kError::kInvalidSlotID);
       }
 
       auto port_id = dev->DeviceContext()->slot_context.bits.root_hub_port_num;
 
       if (port_id != addressing_port) {
-        return MAKE_ERROR(Error::kInvalidPhase);
+        return KernelError(kError::kInvalidPhase);
       }
       if (port_config_phase[port_id] != ConfigPhase::kAddressingDevice) {
-        return MAKE_ERROR(Error::kInvalidPhase);
+        return KernelError(kError::kInvalidPhase);
       }
 
       addressing_port = 0;
@@ -295,18 +295,18 @@ namespace {
     } else if (issuer_type == ConfigureEndpointCommandTRB::Type) {
       auto dev = xhc.DeviceManager()->FindBySlot(slot_id);
       if (dev == nullptr) {
-        return MAKE_ERROR(Error::kInvalidSlotID);
+        return KernelError(kError::kInvalidSlotID);
       }
 
       auto port_id = dev->DeviceContext()->slot_context.bits.root_hub_port_num;
       if (port_config_phase[port_id] != ConfigPhase::kConfiguringEndpoints) {
-        return MAKE_ERROR(Error::kInvalidPhase);
+        return KernelError(kError::kInvalidPhase);
       }
 
       return CompleteConfiguration(xhc, port_id, slot_id);
     }
 
-    return MAKE_ERROR(Error::kInvalidPhase);
+    return KernelError(kError::kInvalidPhase);
   }
 
   void RequestHCOwnership(uintptr_t mmio_base, HCCPARAMS1_Bitmap hccp) {
@@ -328,14 +328,14 @@ namespace {
     }
 
     r.bits.hc_os_owned_semaphore = 1;
-    Log(kDebug, "waiting until OS owns xHC...\n");
+    PutLog(kLogDebug, "waiting until OS owns xHC...\n");
     reg.Write(r);
 
     do {
       r = reg.Read();
     } while (r.bits.hc_bios_owned_semaphore ||
              !r.bits.hc_os_owned_semaphore);
-    Log(kDebug, "OS has owned xHC\n");
+    PutLog(kLogDebug, "OS has owned xHC\n");
   }
 
   void SwitchEhci2Xhci(const pci::Device& xhc_dev) {
@@ -355,7 +355,7 @@ namespace {
     pci::WriteConfReg(xhc_dev, 0xd8, superspeed_ports); // USB3_PSSEN
     uint32_t ehci2xhci_ports = pci::ReadConfReg(xhc_dev, 0xd4); // XUSB2PRM
     pci::WriteConfReg(xhc_dev, 0xd0, ehci2xhci_ports); // XUSB2PR
-    Log(kDebug, "SwitchEhci2Xhci: SS = %02x, xHCI = %02x\n",
+    PutLog(kLogDebug, "SwitchEhci2Xhci: SS = %02x, xHCI = %02x\n",
         superspeed_ports, ehci2xhci_ports);
   }
 } // namespace
@@ -371,7 +371,7 @@ namespace usb::xhci {
             cap_->HCSPARAMS1.Read().bits.max_ports)} {
   }
 
-  Error Controller::Initialize() {
+  kError Controller::Initialize() {
     if (auto err = devmgr_.Initialize(kDeviceSize)) {
       return err;
     }
@@ -395,14 +395,14 @@ namespace usb::xhci {
     usbcmd.bits.host_controller_reset = true;
     op_->USBCMD.Write(usbcmd);
 
-    Log(kDebug, "xhci::Controller::Initialize: waiting 1ms...\n");
+    PutLog(kLogDebug, "xhci::Controller::Initialize: waiting 1ms...\n");
     auto after_1ms = int(0.01 * kTimerFreq) + timer_manager->CurrentTick();
     while (timer_manager->CurrentTick() <= after_1ms);
 
     while (op_->USBCMD.Read().bits.host_controller_reset);
     while (op_->USBSTS.Read().bits.controller_not_ready);
 
-    Log(kDebug, "MaxSlots: %u\n", cap_->HCSPARAMS1.Read().bits.max_device_slots);
+    PutLog(kLogDebug, "MaxSlots: %u\n", cap_->HCSPARAMS1.Read().bits.max_device_slots);
     // Set "Max Slots Enabled" field in CONFIG.
     auto config = op_->CONFIG.Read();
     config.bits.max_device_slots_enabled = kDeviceSize;
@@ -416,11 +416,11 @@ namespace usb::xhci {
       auto scratchpad_buf_arr = AllocArray<void*>(max_scratchpad_buffers, 64, 4096);
       for (int i = 0; i < max_scratchpad_buffers; ++i) {
         scratchpad_buf_arr[i] = AllocMem(4096, 4096, 4096);
-        Log(kDebug, "scratchpad buffer array %d = %p\n",
+        PutLog(kLogDebug, "scratchpad buffer array %d = %p\n",
             i, scratchpad_buf_arr[i]);
       }
       devmgr_.DeviceContexts()[0] = reinterpret_cast<DeviceContext*>(scratchpad_buf_arr);
-      Log(kInfo, "wrote scratchpad buffer array %p to dev ctx array 0\n",
+      PutLog(kLogInfo, "wrote scratchpad buffer array %p to dev ctx array 0\n",
           scratchpad_buf_arr);
     }
 
@@ -449,10 +449,10 @@ namespace usb::xhci {
     usbcmd.bits.interrupter_enable = true;
     op_->USBCMD.Write(usbcmd);
 
-    return MAKE_ERROR(Error::kSuccess);
+    return KernelError(kError::kSuccess);
   }
 
-  Error Controller::Run() {
+  kError Controller::Run() {
     // Run the controller
     auto usbcmd = op_->USBCMD.Read();
     usbcmd.bits.run_stop = true;
@@ -461,21 +461,21 @@ namespace usb::xhci {
 
     while (op_->USBSTS.Read().bits.host_controller_halted);
 
-    return MAKE_ERROR(Error::kSuccess);
+    return KernelError(kError::kSuccess);
   }
 
   DoorbellRegister* Controller::DoorbellRegisterAt(uint8_t index) {
     return &DoorbellRegisters()[index];
   }
 
-  Error ConfigurePort(Controller& xhc, Port& port) {
+  kError ConfigurePort(Controller& xhc, Port& port) {
     if (port_config_phase[port.Number()] == ConfigPhase::kNotConnected) {
       return ResetPort(xhc, port);
     }
-    return MAKE_ERROR(Error::kSuccess);
+    return KernelError(kError::kSuccess);
   }
 
-  Error ConfigureEndpoints(Controller& xhc, Device& dev) {
+  kError ConfigureEndpoints(Controller& xhc, Device& dev) {
     auto& ep_configs = dev.EndpointConfigs();
 
     memset(&dev.InputContext()->input_control_context, 0, sizeof(InputControlContext));
@@ -487,7 +487,7 @@ namespace usb::xhci {
     const auto port_id{dev.DeviceContext()->slot_context.bits.root_hub_port_num};
     const int port_speed{xhc.PortAt(port_id).Speed()};
     if (port_speed == 0 || port_speed > kSuperSpeedPlus) {
-      return MAKE_ERROR(Error::kUnknownXHCISpeedID);
+      return KernelError(kError::kUnknownXHCISpeedID);
     }
 
     auto convert_interval{
@@ -536,15 +536,15 @@ namespace usb::xhci {
     xhc.CommandRing()->Push(cmd);
     xhc.DoorbellRegisterAt(0)->Ring(0);
 
-    return MAKE_ERROR(Error::kSuccess);
+    return KernelError(kError::kSuccess);
   }
 
-  Error ProcessEvent(Controller& xhc) {
+  kError ProcessEvent(Controller& xhc) {
     if (!xhc.PrimaryEventRing()->HasFront()) {
-      return MAKE_ERROR(Error::kSuccess);
+      return KernelError(kError::kSuccess);
     }
 
-    Error err = MAKE_ERROR(Error::kNotImplemented);
+    kError err = KernelError(kError::kNotImplemented);
     auto event_trb = xhc.PrimaryEventRing()->Front();
     if (auto trb = TRBDynamicCast<TransferEventTRB>(event_trb)) {
       err = OnEvent(xhc, *trb);
@@ -574,10 +574,10 @@ namespace usb::xhci {
     }
 
     if (xhc_dev) {
-      Log(kInfo, "xHC has been found: %d.%d.%d\n",
+      PutLog(kLogInfo, "xHC has been found: %d.%d.%d\n",
           xhc_dev->bus, xhc_dev->device, xhc_dev->function);
     } else {
-      Log(kError, "xHC has not been found\n");
+      PutLog(kLogError, "xHC has not been found\n");
       exit(1);
     }
 
@@ -588,10 +588,10 @@ namespace usb::xhci {
         pci::MSITriggerMode::kLevel, pci::MSIDeliveryMode::kFixed,
         InterruptVector::kXHCI, 0);
 
-    const WithError<uint64_t> xhc_bar = pci::ReadBar(*xhc_dev, 0);
-    Log(kDebug, "ReadBar: %s\n", xhc_bar.error.Name());
+    const WithkError<uint64_t> xhc_bar = pci::ReadBar(*xhc_dev, 0);
+    PutLog(kLogDebug, "ReadBar: %s\n", xhc_bar.error.Name());
     const uint64_t xhc_mmio_base = xhc_bar.value & ~static_cast<uint64_t>(0xf);
-    Log(kDebug, "xHC mmio_base = %08lx\n", xhc_mmio_base);
+    PutLog(kLogDebug, "xHC mmio_base = %08lx\n", xhc_mmio_base);
 
     usb::xhci::controller = new Controller{xhc_mmio_base};
     Controller& xhc = *usb::xhci::controller;
@@ -600,20 +600,20 @@ namespace usb::xhci {
       SwitchEhci2Xhci(*xhc_dev);
     }
     if (auto err = xhc.Initialize()) {
-      Log(kError, "xhc initialize failed: %s\n", err.Name());
+      PutLog(kLogError, "xhc initialize failed: %s\n", err.Name());
       exit(1);
     }
 
-    Log(kInfo, "xHC starting\n");
+    PutLog(kLogInfo, "xHC starting\n");
     xhc.Run();
 
     for (int i = 1; i <= xhc.MaxPorts(); ++i) {
       auto port = xhc.PortAt(i);
-      Log(kDebug, "Port %d: IsConnected=%d\n", i, port.IsConnected());
+      PutLog(kLogDebug, "Port %d: IsConnected=%d\n", i, port.IsConnected());
 
       if (port.IsConnected()) {
         if (auto err = ConfigurePort(xhc, port)) {
-          Log(kError, "failed to configure port: %s at %s:%d\n",
+          PutLog(kLogError, "failed to configure port: %s at %s:%d\n",
               err.Name(), err.File(), err.Line());
           continue;
         }
@@ -624,7 +624,7 @@ namespace usb::xhci {
   void ProcessEvents() {
     while (controller->PrimaryEventRing()->HasFront()) {
       if (auto err = ProcessEvent(*controller)) {
-        Log(kError, "Error while ProcessEvent: %s at %s:%d\n",
+        PutLog(kLogError, "kError while ProcessEvent: %s at %s:%d\n",
             err.Name(), err.File(), err.Line());
       }
     }

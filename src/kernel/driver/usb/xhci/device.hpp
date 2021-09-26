@@ -35,7 +35,7 @@ namespace usb::xhci {
 
     Device(uint8_t slot_id, DoorbellRegister* dbreg);
 
-    Error Initialize();
+    kError Initialize();
 
     DeviceContext* DeviceContext() { return &ctx_; }
     InputContext* InputContext() { return &input_ctx_; }
@@ -48,14 +48,14 @@ namespace usb::xhci {
     void SelectForSlotAssignment();
     Ring* AllocTransferRing(DeviceContextIndex index, size_t buf_size);
 
-    Error ControlIn(EndpointID ep_id, SetupData setup_data,
+    kError ControlIn(EndpointID ep_id, SetupData setup_data,
                     void* buf, int len, ClassDriver* issuer) override;
-    Error ControlOut(EndpointID ep_id, SetupData setup_data,
+    kError ControlOut(EndpointID ep_id, SetupData setup_data,
                      const void* buf, int len, ClassDriver* issuer) override;
-    Error NormalIn(EndpointID ep_id, void* buf, int len) override;
-    Error NormalOut(EndpointID ep_id, const void* buf, int len) override;
+    kError NormalIn(EndpointID ep_id, void* buf, int len) override;
+    kError NormalOut(EndpointID ep_id, const void* buf, int len) override;
 
-    Error OnTransferEventReceived(const TransferEventTRB& trb);
+    kError OnTransferEventReceived(const TransferEventTRB& trb);
 
    private:
     alignas(64) struct DeviceContext ctx_;
@@ -72,6 +72,6 @@ namespace usb::xhci {
      */
     ArrayMap<const void*, const SetupStageTRB*, 16> setup_stage_map_{};
 
-    Error PushOneTransaction(EndpointID ep_id, const void* buf, int len);
+    kError PushOneTransaction(EndpointID ep_id, const void* buf, int len);
   };
 }

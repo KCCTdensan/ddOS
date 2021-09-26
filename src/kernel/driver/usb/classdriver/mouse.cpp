@@ -3,20 +3,20 @@
 #include <algorithm>
 #include "../memory.hpp"
 #include "../device.hpp"
-#include "logger.hpp"
+#include "log.hpp"
 
 namespace usb {
   HIDMouseDriver::HIDMouseDriver(Device* dev, int interface_index)
       : HIDBaseDriver{dev, interface_index, 3} {
   }
 
-  Error HIDMouseDriver::OnDataReceived() {
+  kError HIDMouseDriver::OnDataReceived() {
     uint8_t buttons = Buffer()[0];
     int8_t displacement_x = Buffer()[1];
     int8_t displacement_y = Buffer()[2];
     NotifyMouseMove(buttons, displacement_x, displacement_y);
-    Log(kDebug, "%02x,(%3d,%3d)\n", buttons, displacement_x, displacement_y);
-    return MAKE_ERROR(Error::kSuccess);
+    PutLog(kLogDebug, "%02x,(%3d,%3d)\n", buttons, displacement_x, displacement_y);
+    return KernelError(kError::kSuccess);
   }
 
   void* HIDMouseDriver::operator new(size_t size) {

@@ -12,14 +12,14 @@ namespace usb {
   class HIDBaseDriver : public ClassDriver {
    public:
     HIDBaseDriver(Device* dev, int interface_index, int in_packet_size);
-    Error Initialize() override;
-    Error SetEndpoint(const std::vector<EndpointConfig>& configs) override;
-    Error OnEndpointsConfigured() override;
-    Error OnControlCompleted(EndpointID ep_id, SetupData setup_data,
+    kError Initialize() override;
+    kError SetEndpoint(const std::vector<EndpointConfig>& configs) override;
+    kError OnEndpointsConfigured() override;
+    kError OnControlCompleted(EndpointID ep_id, SetupData setup_data,
                              const void* buf, int len) override;
-    Error OnNormalCompleted(EndpointID ep_id, const void* buf, int len) override;
+    kError OnNormalCompleted(EndpointID ep_id, const void* buf, int len) override;
 
-    virtual Error OnDataReceived() = 0;
+    virtual kError OnDataReceived() = 0;
     const static size_t kBufferSize = 1024;
     const std::array<uint8_t, kBufferSize>& Buffer() const { return buf_; }
     const std::array<uint8_t, kBufferSize>& PreviousBuffer() const { return previous_buf_; }

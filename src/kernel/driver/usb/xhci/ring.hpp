@@ -24,7 +24,7 @@ namespace usb::xhci {
     Ring& operator=(const Ring&) = delete;
 
     /** @brief リングのメモリ領域を割り当て，メンバを初期化する． */
-    Error Initialize(size_t buf_size);
+    kError Initialize(size_t buf_size);
 
     /** @brief TRB に cycle bit を設定した上でリング末尾に追加する．
      *
@@ -77,7 +77,7 @@ namespace usb::xhci {
 
   class EventRing {
    public:
-    Error Initialize(size_t buf_size, InterrupterRegisterSet* interrupter);
+    kError Initialize(size_t buf_size, InterrupterRegisterSet* interrupter);
 
     TRB* ReadDequeuePointer() const {
       return reinterpret_cast<TRB*>(interrupter_->ERDP.Read().Pointer());

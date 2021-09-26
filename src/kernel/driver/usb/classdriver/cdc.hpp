@@ -94,14 +94,14 @@ namespace usb::cdc {
     CDCDriver(Device* dev, const InterfaceDescriptor* if_comm,
               const InterfaceDescriptor* if_data);
 
-    Error Initialize() override;
-    Error SetEndpoint(const std::vector<EndpointConfig>& configs) override;
-    Error OnEndpointsConfigured() override;
-    Error OnControlCompleted(EndpointID ep_id, SetupData setup_data,
+    kError Initialize() override;
+    kError SetEndpoint(const std::vector<EndpointConfig>& configs) override;
+    kError OnEndpointsConfigured() override;
+    kError OnControlCompleted(EndpointID ep_id, SetupData setup_data,
                              const void* buf, int len) override;
-    Error OnNormalCompleted(EndpointID ep_id, const void* buf, int len) override;
+    kError OnNormalCompleted(EndpointID ep_id, const void* buf, int len) override;
 
-    Error SendSerial(const void* buf, int len);
+    kError SendSerial(const void* buf, int len);
     int ReceiveSerial(void* buf, int len);
 
    private:

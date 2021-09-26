@@ -10,7 +10,7 @@ namespace usb {
       : HIDBaseDriver{dev, interface_index, 8} {
   }
 
-  Error HIDKeyboardDriver::OnDataReceived() {
+  kError HIDKeyboardDriver::OnDataReceived() {
     std::bitset<256> prev, current;
     for (int i = 2; i < 8; ++i) {
       prev.set(PreviousBuffer()[i], true);
@@ -23,7 +23,7 @@ namespace usb {
         NotifyKeyPush(Buffer()[0], key, pressed.test(key));
       }
     }
-    return MAKE_ERROR(Error::kSuccess);
+    return KernelError(kError::kSuccess);
   }
 
   void* HIDKeyboardDriver::operator new(size_t size) {

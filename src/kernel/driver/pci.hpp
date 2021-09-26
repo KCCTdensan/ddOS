@@ -35,7 +35,7 @@ namespace pci {
   // お便利ツール
   uint32_t ReadReg(const Device& dev,uint8_t addr);
   void WriteReg(const Device& dev,uint8_t addr,uint32_t val);
-  inline uint16_t GetVendorId(const Device& dev);
+  uint16_t GetVendorId(const Device& dev);
   uint16_t GetVendorId(uint8_t bus_id,uint8_t dev_id,uint8_t func_id);
   uint16_t GetDeviceId(uint8_t bus_id,uint8_t dev_id,uint8_t func_id);
   uint8_t GetHeaderType(uint8_t bus_id,uint8_t dev_id,uint8_t func_id);

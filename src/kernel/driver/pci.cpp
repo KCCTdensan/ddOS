@@ -99,7 +99,7 @@ namespace pci {
     IoSetAddr(MakeConfigAddrVal(bus_id,dev_id,func_id,0));
     return IoReadData() & 0xffffu;
   }
-  inline uint16_t GetVendorId(const Device& dev){
+  uint16_t GetVendorId(const Device& dev){
     return GetVendorId(dev.bus_id,dev.dev_id,dev.func_id);
   }
   uint16_t GetDeviceId(

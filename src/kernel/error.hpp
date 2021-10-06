@@ -77,11 +77,18 @@ public:
   //   : code(code_),file(file_),line(line_){};
   kError(Code code_) : code(code_){};
 
+  const char* Name() const {
+    return CodeNames[code];
+  }
+
   Code Cause() const {
     return this->code;
   }
-  const char* Name() const {
-    return CodeNames[code];
+  const char* File() const {
+    return this->file;
+  }
+  int Line() const {
+    return this->line;
   }
 
   operator bool() const {

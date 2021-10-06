@@ -1,5 +1,6 @@
 #include "pci.hpp"
 #include "asmfunc.h"
+#include "log.hpp"
 
 namespace {
   using namespace pci;
@@ -61,6 +62,86 @@ namespace {
         return err;
     }
     return KernelError(kError::kSuccess);
+  }
+
+  /** @brief 指定された MSI ケーパビリティ構造を読み取る
+   *
+   * @param dev  MSI ケーパビリティを読み込む PCI デバイス
+   * @param cap_addr  MSI ケーパビリティレジスタのコンフィグレーション空間アドレス
+   */
+  MSICapability ReadMSICapability(const Device& dev, uint8_t cap_addr) {
+    MSICapability msi_cap{};
+
+    msi_cap.header.data = ReadReg(dev, cap_addr);
+    msi_cap.msg_addr = ReadReg(dev, cap_addr + 4);
+
+    uint8_t msg_data_addr = cap_addr + 8;
+    if (msi_cap.header.bits.addr_64_capable) {
+      msi_cap.msg_upper_addr = ReadReg(dev, cap_addr + 8);
+      msg_data_addr = cap_addr + 12;
+    }
+
+    msi_cap.msg_data = ReadReg(dev, msg_data_addr);
+
+    if (msi_cap.header.bits.per_vector_mask_capable) {
+      msi_cap.mask_bits = ReadReg(dev, msg_data_addr + 4);
+      msi_cap.pending_bits = ReadReg(dev, msg_data_addr + 8);
+    }
+
+    return msi_cap;
+  }
+
+  /** @brief 指定された MSI ケーパビリティ構造に書き込む
+   *
+   * @param dev  MSI ケーパビリティを読み込む PCI デバイス
+   * @param cap_addr  MSI ケーパビリティレジスタのコンフィグレーション空間アドレス
+   * @param msi_cap  書き込む値
+   */
+  void WriteMSICapability(const Device& dev, uint8_t cap_addr,
+                          const MSICapability& msi_cap) {
+    WriteReg(dev, cap_addr, msi_cap.header.data);
+    WriteReg(dev, cap_addr + 4, msi_cap.msg_addr);
+
+    uint8_t msg_data_addr = cap_addr + 8;
+    if (msi_cap.header.bits.addr_64_capable) {
+      WriteReg(dev, cap_addr + 8, msi_cap.msg_upper_addr);
+      msg_data_addr = cap_addr + 12;
+    }
+
+    WriteReg(dev, msg_data_addr, msi_cap.msg_data);
+
+    if (msi_cap.header.bits.per_vector_mask_capable) {
+      WriteReg(dev, msg_data_addr + 4, msi_cap.mask_bits);
+      WriteReg(dev, msg_data_addr + 8, msi_cap.pending_bits);
+    }
+  }
+
+  /** @brief 指定された MSI レジスタを設定する */
+  kError ConfigureMSIRegister(const Device& dev, uint8_t cap_addr,
+                            uint32_t msg_addr, uint32_t msg_data,
+                            unsigned int num_vector_exponent) {
+    auto msi_cap = ReadMSICapability(dev, cap_addr);
+
+    if (msi_cap.header.bits.multi_msg_capable <= num_vector_exponent) {
+      msi_cap.header.bits.multi_msg_enable =
+        msi_cap.header.bits.multi_msg_capable;
+    } else {
+      msi_cap.header.bits.multi_msg_enable = num_vector_exponent;
+    }
+
+    msi_cap.header.bits.msi_enable = 1;
+    msi_cap.msg_addr = msg_addr;
+    msi_cap.msg_data = msg_data;
+
+    WriteMSICapability(dev, cap_addr, msi_cap);
+    return KernelError(kError::kSuccess);
+  }
+
+  /** @brief 指定された MSI レジスタを設定する */
+  kError ConfigureMSIXRegister(const Device& dev, uint8_t cap_addr,
+                             uint32_t msg_addr, uint32_t msg_data,
+                             unsigned int num_vector_exponent) {
+    return KernelError(kError::kNotImplemented);
   }
 }
 
@@ -164,5 +245,61 @@ namespace pci {
       bar | (static_cast<uint64_t>(bar_upper)<<32),
       KernelError(kError::kSuccess)
     };
+  }
+
+  CapabilityHeader ReadCapabilityHeader(const Device& dev, uint8_t addr) {
+    CapabilityHeader header;
+    header.data = pci::ReadReg(dev, addr);
+    return header;
+  }
+
+  kError ConfigureMSI(const Device& dev, uint32_t msg_addr, uint32_t msg_data,
+                     unsigned int num_vector_exponent) {
+    uint8_t cap_addr = ReadReg(dev, 0x34) & 0xffu;
+    uint8_t msi_cap_addr = 0, msix_cap_addr = 0;
+    while (cap_addr != 0) {
+      auto header = ReadCapabilityHeader(dev, cap_addr);
+      if (header.bits.cap_id == kCapabilityMSI) {
+        msi_cap_addr = cap_addr;
+      } else if (header.bits.cap_id == kCapabilityMSIX) {
+        msix_cap_addr = cap_addr;
+      }
+      cap_addr = header.bits.next_ptr;
+    }
+
+    if (msi_cap_addr) {
+      return ConfigureMSIRegister(dev, msi_cap_addr, msg_addr, msg_data, num_vector_exponent);
+    } else if (msix_cap_addr) {
+      return ConfigureMSIXRegister(dev, msix_cap_addr, msg_addr, msg_data, num_vector_exponent);
+    }
+    return KernelError(kError::kNoPCIMSI);
+  }
+
+  kError ConfigureMSIFixedDestination(
+      const Device& dev, uint8_t apic_id,
+      MSITriggerMode trigger_mode, MSIDeliveryMode delivery_mode,
+      uint8_t vector, unsigned int num_vector_exponent) {
+    uint32_t msg_addr = 0xfee00000u | (apic_id << 12);
+    uint32_t msg_data = (static_cast<uint32_t>(delivery_mode) << 8) | vector;
+    if (trigger_mode == MSITriggerMode::kLevel) {
+      msg_data |= 0xc000;
+    }
+    return ConfigureMSI(dev, msg_addr, msg_data, num_vector_exponent);
+  }
+}
+
+void InitializePCI() {
+  if (auto err = pci::ScanAllBus()) {
+    PutLog(kLogError, "ScanAllBus: %s\n", err.Name());
+    exit(1);
+  }
+
+  for (int i = 0; i < pci::device_num; ++i) {
+    const auto& dev = pci::devices[i];
+    auto vendor_id = pci::GetVendorId(dev);
+    auto class_code = pci::GetClassCode(dev.bus_id, dev.dev_id, dev.func_id);
+    PutLog(kLogDebug, "%d.%d.%d: vend %04x, class %08x, head %02x\n",
+        dev.bus_id, dev.dev_id, dev.func_id,
+        vendor_id, class_code, dev.header_type);
   }
 }

@@ -5,7 +5,7 @@ if [ $# -lt 1 ];then
   exit 1
 fi
 
-WORK_DIR=.dd
+WORK_DIR=qemu_work
 SUDO_OR_DOAS=sudo
 
 TOOLS_DIR=$(dirname "$0")

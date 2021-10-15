@@ -10,6 +10,10 @@
 #include "console.hpp"
 #include "log.hpp"
 #include "driver/pci.hpp" // error.hppもついてくる
+#include "driver/usb/memory.hpp"
+#include "driver/usb/xhci/device.hpp"
+//#include "usb/xhci/xhci.hpp"
+//#include "usb/xhci/trb.hpp"
 
 kConsole* kernel_console;
 char kernel_console_buf[sizeof(kConsole)];
@@ -65,6 +69,40 @@ extern "C" void KernelMain(const FBConf& fbconf){
            dev.bus_id,dev.dev_id,dev.func_id,
            vendor_id,class_code,dev.header_type);
   }
+
+  // find xHC
+  pci::Device* xhc_dev = nullptr;
+  for(int i=0;i<pci::device_num;i++) {
+      if (pci::devices[i].class_code.Match(0x0cu, 0x03u, 0x30u)) {
+          xhc_dev = &pci::devices[i];
+          if (0x8086 == pci::GetVendorId(*xhc_dev)) {
+              break;
+          }
+      }
+  }
+  if(xhc_dev){
+      PutLog(kLogInfo, "xHC has been found: %d.%d.%d\n", xhc_dev->bus_id, xhc_dev->dev_id, xhc_dev->func_id);
+  }
+
+  // read BAR0
+  const WithError<uint64_t> xhc_bar = pci::ReadBar(*xhc_dev, 0);
+  PutLog(kLogDebug, "ReadBar: %s\n", xhc_bar.error.Name());
+  const uint64_t xhc_mmio_base = xhc_bar.data & ~static_cast<uint64_t>(0xf);
+  PutLog(kLogDebug, "xHC mmio_base = %08lx\n", xhc_mmio_base);
+
+  // initialize xHC and start up
+  usb::xhci::Controller xhc{xhc_mmio_base};
+  if(0x8086 == pci::GetVendorId(*xhc_dev)){
+      SwitchEhci2Xhci(*xhc_dev);
+  }
+  {
+    auto err = xhc.Initialize();
+    PutLog(kLogDebug, "xhc.Initialize: %s\n", err.Name());
+  }
+  PutLog(kLogInfo, "xHC starting\n");
+  xhc.Run();
+
+
 
   // main loop
 

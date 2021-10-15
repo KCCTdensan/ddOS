@@ -35,6 +35,16 @@ namespace usb::xhci {
 
     Device(uint8_t slot_id, DoorbellRegister* dbreg);
 
+
+
+
+
+
+
+
+
+
+
     kError Initialize();
 
     DeviceContext* DeviceContext() { return &ctx_; }

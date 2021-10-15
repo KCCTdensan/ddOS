@@ -10,10 +10,10 @@
 #include "console.hpp"
 #include "log.hpp"
 #include "driver/pci.hpp" // error.hppもついてくる
-#include "driver/usb/memory.hpp"
-#include "driver/usb/xhci/device.hpp"
-//#include "usb/xhci/xhci.hpp"
-//#include "usb/xhci/trb.hpp"
+#include "driver/usb/device.hpp"
+#include "driver/usb/classdriver/mouse.hpp"
+#include "driver/usb/xhci/xhci.hpp"
+#include "driver/usb/xhci/trb.hpp"
 
 kConsole* kernel_console;
 char kernel_console_buf[sizeof(kConsole)];
@@ -31,6 +31,27 @@ int printk(const char* fmt,...){
 
   kernel_console->PutStr(s);
   return res;
+}
+
+void SwitchEhci2Xhci(const pci::Device& xhc_dev) {
+    bool intel_ehc_exist = false;
+    for (int i = 0; i < pci::device_num; ++i) {
+        if (pci::devices[i].class_code.Match(0x0cu, 0x03u, 0x20u) /* EHCI */ &&
+            0x8086 == pci::GetVendorId(pci::devices[i])) {
+            intel_ehc_exist = true;
+            break;
+        }
+    }
+    if (!intel_ehc_exist) {
+        return;
+    }
+
+    uint32_t superspeed_ports = pci::ReadReg(xhc_dev, 0xdc); // USB3PRM
+    pci::WriteReg(xhc_dev, 0xd8, superspeed_ports); // USB3_PSSEN
+    uint32_t ehci2xhci_ports = pci::ReadReg(xhc_dev, 0xd4); // XUSB2PRM
+    pci::WriteReg(xhc_dev, 0xd0, ehci2xhci_ports); // XUSB2PR
+    PutLog(kLogDebug, "SwitchEhci2Xhci: SS = %02, xHCI = %02x\n",
+        superspeed_ports, ehci2xhci_ports);
 }
 
 extern "C" void KernelMain(const FBConf& fbconf){
@@ -101,6 +122,26 @@ extern "C" void KernelMain(const FBConf& fbconf){
   }
   PutLog(kLogInfo, "xHC starting\n");
   xhc.Run();
+
+//  // do port setting by searching usb port (mouse)
+//  usb::HIDMouseDriver::default_observer = MouseObserver;
+//  for(int i=0;i<=xhc.MaxPorts();i++){
+//    auto port = xhc.PortAt(i);
+//    PutLog(kLogDebug, "Port %d: IsConnected=%d\n", i, port.IsConnected());
+//    if(port.IsConnected()){
+//      if(auto err = ConfigurePort(xhc, port)){
+//        PutLog(kLogError, "failed to configure port: %s at %s:%d\n", err.Name(), err.File(), err.Line());
+//        continue;
+//      }
+//    }
+//  }
+
+  while(1){
+    if(auto err = ProcessEvent(xhc)){
+      PutLog(kLogError, "Error while ProcessEvent: %s at %s:%d\n", err.Name(), err.File(), err.Line());
+    }
+  }
+
 
 
 

@@ -9,12 +9,14 @@
 #include "font.hpp"
 #include "console.hpp"
 #include "log.hpp"
+#include "driver/pci.hpp"
 #include "interrupt.hpp"
 #include "driver/pci.hpp" // error.hppもついてくる
 #include "driver/usb/device.hpp"
 #include "driver/usb/classdriver/mouse.hpp"
 #include "driver/usb/xhci/xhci.hpp"
 #include "driver/usb/xhci/trb.hpp"
+#include "driver/asmfunc.h"
 
 kConsole* kernel_console;
 char kernel_console_buf[sizeof(kConsole)];
@@ -118,6 +120,15 @@ extern "C" void KernelMain(const FBConf& fbconf){
   if(xhc_dev){
       PutLog(kLogInfo, "xHC has been found: %d.%d.%d\n", xhc_dev->bus_id, xhc_dev->dev_id, xhc_dev->func_id);
   }
+  const uint16_t cs = GetCS();
+  SetIDTEntry(idt[InterruptVector::kXHCI], MakeIDTAttr(DescriptorType::kInterruptGate, 0),
+              reinterpret_cast<uint64_t>(IntHandlerXHCI), cs);
+  LoadIDT(sizeof(idt) - 1, reinterpret_cast<uintptr_t>(&idt[0]));
+
+  // MSI割り込みenable
+  const uint8_t bsp_local_apic_id = *reinterpret_cast<const uint32_t*>(0xfee00020) >> 24;
+  pci::ConfigureMSIFixedDestination(
+          *xhc_dev, bsp_local_apic_id, pci::MSITriggerMode::kLevel, pci::MSIDeliveryMode::kFixed, InterruptVector::kXHCI, 0);
 
   // read BAR0
   const WithError<uint64_t> xhc_bar = pci::ReadBar(*xhc_dev, 0);
@@ -150,11 +161,11 @@ extern "C" void KernelMain(const FBConf& fbconf){
 //    }
 //  }
 
-  while(1){
-    if(auto err = ProcessEvent(xhc)){
-      PutLog(kLogError, "Error while ProcessEvent: %s at %s:%d\n", err.Name(), err.File(), err.Line());
-    }
-  }
+//  while(1){
+//    if(auto err = ProcessEvent(xhc)){
+//      PutLog(kLogError, "Error while ProcessEvent: %s at %s:%d\n", err.Name(), err.File(), err.Line());
+//    }
+//  }
 
 
 

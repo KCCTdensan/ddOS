@@ -9,6 +9,7 @@
 #include "font.hpp"
 #include "console.hpp"
 #include "log.hpp"
+#include "interrupt.hpp"
 #include "driver/pci.hpp" // error.hppもついてくる
 #include "driver/usb/device.hpp"
 #include "driver/usb/classdriver/mouse.hpp"
@@ -52,6 +53,19 @@ void SwitchEhci2Xhci(const pci::Device& xhc_dev) {
     pci::WriteReg(xhc_dev, 0xd0, ehci2xhci_ports); // XUSB2PR
     PutLog(kLogDebug, "SwitchEhci2Xhci: SS = %02, xHCI = %02x\n",
         superspeed_ports, ehci2xhci_ports);
+}
+
+usb::xhci::Controller* xhc;
+
+__attribute__((interrupt))
+void IntHandlerXHCI(InterruptFrame* frame) {
+  while (xhc->PrimaryEventRing()->HasFront()) {
+    if (auto err = ProcessEvent(*xhc)) {
+      PutLog(kLogError, "Error while ProcessEvent: %s at %s:%d\n",
+          err.Name(), err.File(), err.Line());
+    }
+  }
+  NotifyEndOfInterrupt();
 }
 
 extern "C" void KernelMain(const FBConf& fbconf){
@@ -141,6 +155,8 @@ extern "C" void KernelMain(const FBConf& fbconf){
       PutLog(kLogError, "Error while ProcessEvent: %s at %s:%d\n", err.Name(), err.File(), err.Line());
     }
   }
+
+
 
 
 

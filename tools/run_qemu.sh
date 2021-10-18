@@ -44,6 +44,8 @@ fi
 
 sleep 0.5
 $SUDO_OR_DOAS umount $MOUNT_POINT
+## For macOS
+# hdiutil detach /dev/disk1234
 
 ## qemu
 

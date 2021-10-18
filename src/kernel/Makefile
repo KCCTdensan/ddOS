@@ -1,6 +1,6 @@
 TARGET = kernel.elf
 OBJS = main.o support/newlib_support.o support/libcxx_support.o \
-       graphics.o font.o fontascii.o console.o log.o timer.o interrupt.o\
+       graphics.o font.o fontascii.o console.o log.o timer.o interrupt.o \
        driver/asmfunc.o driver/pci.o \
        driver/usb/memory.o driver/usb/device.o driver/usb/xhci/ring.o driver/usb/xhci/trb.o \
        driver/usb/xhci/xhci.o driver/usb/xhci/port.o driver/usb/xhci/device.o driver/usb/xhci/devmgr.o \
@@ -12,6 +12,8 @@ CPPFLAGS += -I.
 CFLAGS   += -O2 -Wall -g --target=x86_64-elf -ffreestanding -mno-red-zone
 CXXFLAGS += -O2 -Wall -g --target=x86_64-elf -ffreestanding -mno-red-zone \
             -fno-exceptions -fno-rtti -std=c++17
+LDCFLAGS += --O2 --release --betterC \
+            --extern-std=c++17
 LDFLAGS  += --entry KernelMain -z norelro --image-base 0x100000 --static
 
 
@@ -24,6 +26,9 @@ clean:
 
 kernel.elf: $(OBJS) Makefile
 	ld.lld $(LDFLAGS) -o kernel.elf $(OBJS) -lc -lc++ -lc++abi #-lm -lfreetype
+
+%.o: %.d Makefile
+	ldc2 $(LDCFLAGS) -c $< --of=$@
 
 %.o: %.cpp Makefile
 	clang++ $(CPPFLAGS) $(CXXFLAGS) -c $< -o $@

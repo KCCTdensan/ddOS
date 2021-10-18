@@ -22,7 +22,10 @@ all: $(TARGET)
 
 .PHONY: clean
 clean:
-	rm -rf *.o **/*.o .*.d **/.*.d
+	rm -rf *.o .*.d \
+           */*.o */.*.d \
+           */*/*.o */*/.*.d \
+           */*/*/*.o */*/*/.*.d
 
 kernel.elf: $(OBJS) Makefile
 	ld.lld $(LDFLAGS) -o kernel.elf $(OBJS) -lc -lc++ -lc++abi #-lm -lfreetype

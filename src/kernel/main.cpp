@@ -16,7 +16,8 @@
 #include "driver/usb/classdriver/mouse.hpp"
 #include "driver/usb/xhci/xhci.hpp"
 #include "driver/usb/xhci/trb.hpp"
-#include "driver/asmfunc.h"
+#include "asmfunc.h"
+#include "queue.hpp"
 
 kConsole* kernel_console;
 char kernel_console_buf[sizeof(kConsole)];
@@ -156,7 +157,7 @@ extern "C" void KernelMain(const FBConf& fbconf){
 //    if(port.IsConnected()){
 //      if(auto err = ConfigurePort(xhc, port)){
 //        PutLog(kLogError, "failed to configure port: %s at %s:%d\n", err.Name(), err.File(), err.Line());
-//        continue;
+//        continue;œ
 //      }
 //    }
 //  }
@@ -166,6 +167,8 @@ extern "C" void KernelMain(const FBConf& fbconf){
 //      PutLog(kLogError, "Error while ProcessEvent: %s at %s:%d\n", err.Name(), err.File(), err.Line());
 //    }
 //  }
+
+
 
 
 

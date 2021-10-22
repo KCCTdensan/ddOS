@@ -1,7 +1,7 @@
 TARGET = kernel.elf
 OBJS = main.o support/newlib_support.o support/libcxx_support.o \
        graphics.o font.o fontascii.o console.o log.o timer.o interrupt.o \
-       driver/asmfunc.o driver/pci.o \
+       asmfunc.o driver/pci.o \
        driver/usb/memory.o driver/usb/device.o driver/usb/xhci/ring.o driver/usb/xhci/trb.o \
        driver/usb/xhci/xhci.o driver/usb/xhci/port.o driver/usb/xhci/device.o driver/usb/xhci/devmgr.o \
        driver/usb/xhci/registers.o driver/usb/classdriver/base.o driver/usb/classdriver/hid.o \

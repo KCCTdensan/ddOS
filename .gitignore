@@ -1,4 +1,13 @@
+## JetBrains
 .idea/workspace.xml
 .idea/usage.statistics.xml
 .idea/shelf/
 *.iml
+
+## macOS
+.DS_Store
+.AppleDouble
+.LSOverride
+
+## other
+*.swp

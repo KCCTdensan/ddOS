@@ -16,7 +16,7 @@ RUN { \
 RUN sed -ie 's/archive\.ubuntu\.com/jp\.archive\.ubuntu\.com/g' /etc/apt/sources.list
 
 RUN apt-get update \
-  && apt-get install -y --no-install-recommends \
+  && apt-get install -y \
     build-essential \
     llvm-7-dev \
     lld-7 \
@@ -30,6 +30,7 @@ RUN apt-get update \
     curl \
     vim \
     sudo \
+    cmake \
   && apt-get clean -y
 
 RUN for item in \
@@ -88,6 +89,14 @@ RUN for item in \
   ; do \
     update-alternatives --install "/usr/bin/${item}" "${item}" "/usr/bin/${item}-7" 50 \
   ; done
+
+## DLANG
+
+RUN mkdir -p /opt/ldc
+RUN curl -L https://github.com/ldc-developers/ldc/releases/download/v1.27.1/ldc2-1.27.1-linux-x86_64.tar.xz \
+  | tar xpJv -C /opt/ldc
+RUN ln -s ldc2-1.27.1-linux-x86_64 /opt/ldc/current
+ENV PATH=$PATH:/opt/ldc/current/bin
 
 ## USER SETUP
 

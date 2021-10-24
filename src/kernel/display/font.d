@@ -1,13 +1,11 @@
-module ddos.font;
-
-import graphics.graphics;
+import display.graphics;
 
 extern const ubyte _binary_fontascii_bin_start;
 extern const ubyte _binary_fontascii_bin_end;
 extern const ubyte _binary_fontascii_bin_size;
 
-int FONT_WIDTH=0; // also used in font.hpp
-int FONT_HEIGHT=0; //
+static int FONT_WIDTH=0; // also used in font.hpp
+static int FONT_HEIGHT=0; //
 
 // ASCII
 
@@ -34,7 +32,7 @@ void FontAscii_writer(ref PixelWriter writer,
 
 // 共通
 
-extern (C++)
+extern(C++)
 void InitFont(){
   const FontAscii_font* font_ascii=
     cast(const FontAscii_font*)(&_binary_fontascii_bin_start);
@@ -42,7 +40,7 @@ void InitFont(){
   FONT_HEIGHT=font_ascii.height;
 }
 
-extern (C++)
+extern(C++)
 void WriteFont(ref PixelWriter writer,
                int x,int y,char c,
                ref const PixelColor color){

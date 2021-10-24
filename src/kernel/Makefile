@@ -1,12 +1,13 @@
 TARGET = kernel.elf
-OBJS = main.o support/newlib_support.o support/libcxx_support.o \
-       graphics/graphics.o graphics/font.o \
-       font.o fontascii.o console.o log.o timer.o interrupt.o \
+OBJS = main.o display/fontascii.o \
+       support/newlib_support.o support/libcxx_support.o \
+       log.o timer.o interrupt.o \
        driver/asmfunc.o driver/pci.o \
        driver/usb/memory.o driver/usb/device.o driver/usb/xhci/ring.o driver/usb/xhci/trb.o \
        driver/usb/xhci/xhci.o driver/usb/xhci/port.o driver/usb/xhci/device.o driver/usb/xhci/devmgr.o \
        driver/usb/xhci/registers.o driver/usb/classdriver/base.o driver/usb/classdriver/hid.o \
        driver/usb/classdriver/keyboard.o driver/usb/classdriver/mouse.o driver/usb/classdriver/cdc.o
+# error.o display/graphics.o display/font.o display/console.o
 DEPENDS = $(join $(dir $(OBJS)),$(addprefix .,$(notdir $(OBJS:.o=.d))))
 
 CPPFLAGS += -I.
@@ -53,10 +54,10 @@ kernel.elf: $(OBJS) Makefile
 %.o: %.asm Makefile
 	nasm -f elf64 -o $@ $<
 
-fontascii.bin: fontascii.bdf
+%.bin: %.bdf
 	../assets/bdf2bin.py $< $@
 
-fontascii.o: fontascii.bin
+%.o: %.bin
 	objcopy -I binary -O elf64-x86-64 -B i386:x86-64 $< $@
 
 .%.d: %.bin

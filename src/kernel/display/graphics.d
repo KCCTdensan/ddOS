@@ -1,5 +1,3 @@
-module ddos.graphics;
-
 // fb_conf.hpp
 enum PixelFmt{
   kPixelRGB,
@@ -16,12 +14,13 @@ struct FBConf{
 
 // Pixel Writer
 
-extern (C++)
-struct PixelColor{
+struct RGBColor {
   ubyte r,g,b;
 }
+extern(C++)
+alias PixelColor = RGBColor;
 
-extern (C++)
+extern(C++)
 class PixelWriter {
 public:
   this(const FBConf fbc) { this.fbconf = fbc; }
@@ -34,7 +33,7 @@ private:
   const FBConf fbconf;
 }
 
-extern (C++)
+extern(C++)
 class PixelWriterRGB : PixelWriter {
 public:
   this(const FBConf fbc){
@@ -48,7 +47,7 @@ public:
   }
 }
 
-extern (C++)
+extern(C++)
 class PixelWriterBGR : PixelWriter {
 public:
   this(const FBConf fbc){
@@ -64,7 +63,7 @@ public:
 
 // お便利ツールズ
 
-extern (C++)
+extern(C++)
 class Vector2D(T) {
   public:
   this(T x_,T y_) {
@@ -81,7 +80,7 @@ class Vector2D(T) {
   }
 }
 
-extern (C++)
+extern(C++)
 void FillRectangle(ref PixelWriter writer,
                    ref const Vector2D!uint start,
                    ref const Vector2D!uint size,

@@ -1,17 +1,36 @@
-#include <cstring>
+import std.algorithm; // min使うため
 
-#include "console.hpp"
+import display.graphics;
 
-template<typename T>
-inline const T& min(const T& a,const T& b){
-  return a<b?a:b;
-}
+static const uint KCONSOLE_BUF_MAX_COL=162; // 黄金比(適当)
+static const uint KCONSOLE_BUF_MAX_ROW=100;
+static const PixelColor KCONSOLE_BG={0,0,0}; // PixelColor 余"白"(黒だけど)
 
-kConsole::kConsole(PixelWriter& writer_,
-                   unsigned int horiz_,unsigned int vert_,
-                   unsigned int x_,unsigned int y_,
-                   const PixelColor& bg_color_,
-                   const PixelColor& text_color_) :
+class kConsole {
+  public:
+  kConsole(PixelWriter& writer_,
+  unsigned int horiz_,
+  unsigned int vert_,
+  unsigned int x_,
+  unsigned int y_,
+  const PixelColor& bg_color_,
+  const PixelColor& text_color_);
+  ~kConsole()=default;
+  void PutStr(const char*);
+  private:
+  PixelWriter& pixel_writer;
+  const PixelColor& bg_color,text_color;
+  unsigned int col,row,buf_x,buf_y,start_x,start_y,cursor_col,cursor_row;
+  char text_buf[KCONSOLE_BUF_MAX_ROW][KCONSOLE_BUF_MAX_COL+1];
+  void PutNL(); // NewLine
+};
+
+kConsole.kConsole(ref PixelWriter writer_,
+                   uint horiz_,uint vert_,
+                   uint x_,
+                    uint y_,
+                   ref const PixelColor bg_color_,
+                   ref const PixelColor text_color_) :
     pixel_writer(writer_),
     bg_color(bg_color_),
     text_color(text_color_),

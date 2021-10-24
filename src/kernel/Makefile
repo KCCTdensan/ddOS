@@ -1,13 +1,12 @@
 TARGET = kernel.elf
-OBJS = main.o display/fontascii.o \
+OBJS = main.o asmfunc.o display/fontascii.o \
        support/newlib_support.o support/libcxx_support.o \
        log.o timer.o interrupt.o \
-       driver/asmfunc.o driver/pci.o \
+       driver/pci.o \
        driver/usb/memory.o driver/usb/device.o driver/usb/xhci/ring.o driver/usb/xhci/trb.o \
        driver/usb/xhci/xhci.o driver/usb/xhci/port.o driver/usb/xhci/device.o driver/usb/xhci/devmgr.o \
        driver/usb/xhci/registers.o driver/usb/classdriver/base.o driver/usb/classdriver/hid.o \
        driver/usb/classdriver/keyboard.o driver/usb/classdriver/mouse.o driver/usb/classdriver/cdc.o
-# error.o display/graphics.o display/font.o display/console.o
 DEPENDS = $(join $(dir $(OBJS)),$(addprefix .,$(notdir $(OBJS:.o=.d))))
 
 CPPFLAGS += -I.

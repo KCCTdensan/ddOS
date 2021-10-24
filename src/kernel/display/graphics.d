@@ -1,16 +1,4 @@
-// fb_conf.hpp
-enum PixelFmt{
-  kPixelRGB,
-  kPixelBGR
-}
-struct FBConf{
-  ubyte* buf;
-  uint pixels_per_line;
-  uint res_horiz;
-  uint res_vert;
-  PixelFmt pixel_fmt;
-}
-// fb_conf.hpp
+import fb_conf;
 
 // Pixel Writer
 
@@ -20,7 +8,6 @@ struct RGBColor {
 extern(C++)
 alias PixelColor = RGBColor;
 
-extern(C++)
 class PixelWriter {
 public:
   this(const FBConf fbc) { this.fbconf = fbc; }
@@ -33,7 +20,6 @@ private:
   const FBConf fbconf;
 }
 
-extern(C++)
 class PixelWriterRGB : PixelWriter {
 public:
   this(const FBConf fbc){
@@ -47,7 +33,6 @@ public:
   }
 }
 
-extern(C++)
 class PixelWriterBGR : PixelWriter {
 public:
   this(const FBConf fbc){
@@ -63,7 +48,6 @@ public:
 
 // お便利ツールズ
 
-extern(C++)
 class Vector2D(T) {
   public:
   this(T x_,T y_) {
@@ -73,14 +57,13 @@ class Vector2D(T) {
 
   T x,y;
 
-  Vector2D!T opOpAssign(string op)(const T d) const if(op == "+") {
+  ref Vector2D opOpAssign(string op)(Vector2D d) if(op == "+") {
     this.x += d.x;
     this.y += d.y;
     return this;
   }
 }
 
-extern(C++)
 void FillRectangle(ref PixelWriter writer,
                    ref const Vector2D!uint start,
                    ref const Vector2D!uint size,

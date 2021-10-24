@@ -105,13 +105,14 @@ unittest {
 
 extern(C++)
 struct WithError(T) {
+  this(KError e, T d) { data = d; error = e; }
   T data;
-  kError error;
+  KError error;
 }
 
 // std::source_locationが使えるようになるまで我慢
 // #define MAKE_ERROR(code) Error((code), __FILE__, __LINE__)
 extern(C++)
-KError KernelError(KError.Code code_){
-  return KError(code_,__FILE__,__LINE__);
+KError KernelError(KError.Code code_, string file = __FILE__, int line = __LINE__) {
+  return KError(code_, __FILE__, __LINE__);
 }

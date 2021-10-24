@@ -1,6 +1,5 @@
 #include <cstdint>
 #include <cstddef>
-#include <cstdio>
 
 #include "elf.hpp"
 #include "memmap.hpp"
@@ -21,21 +20,6 @@
 
 kConsole* kernel_console;
 char kernel_console_buf[sizeof(kConsole)];
-
-// 配置newはmikan側のincludeで定義されてた
-
-int printk(const char* fmt,...){
-  va_list ap;
-  int res;
-  char s[1024];
-
-  va_start(ap,fmt);
-  res=vsprintf(s,fmt,ap);
-  va_end(ap);
-
-  kernel_console->PutStr(s);
-  return res;
-}
 
 void SwitchEhci2Xhci(const pci::Device& xhc_dev) {
     bool intel_ehc_exist = false;

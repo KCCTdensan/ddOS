@@ -1,5 +1,5 @@
 TARGET = kernel.elf
-OBJS = main.o asmfunc.o display/fontascii.o \
+OBJS = main.o asmfunc.o cppfunc.o display/fontascii.o \
        support/newlib_support.o support/libcxx_support.o \
        log.o timer.o interrupt.o \
        driver/pci.o \

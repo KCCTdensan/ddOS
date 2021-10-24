@@ -1,6 +1,6 @@
 #pragma once
 
-#include "fb_conf.hpp"
+#include "../fb_conf.hpp"
 
 struct PixelColor{
   uint8_t r,g,b;

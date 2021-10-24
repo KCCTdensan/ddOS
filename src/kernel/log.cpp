@@ -3,7 +3,7 @@
 #include <cstddef>
 #include <cstdio>
 
-#include "console.hpp"
+#include "display/console.hpp"
 
 namespace {
   LogLevel log_level=kLogInfo;

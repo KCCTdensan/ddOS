@@ -5,16 +5,16 @@ import fb_conf;
 struct RGBColor {
   ubyte r,g,b;
 }
-extern(C++)
-alias PixelColor = RGBColor;
+//extern(C++)
+//alias PixelColor = RGBColor;
 
 class PixelWriter {
 public:
   this(const FBConf fbc) { this.fbconf = fbc; }
-  abstract void Write(uint x, uint y, ref const PixelColor c);
+  abstract void Write(const uint x, const uint y, const RGBColor c);
 protected:
-  ubyte* PixelAt(uint x, uint y) {
-    return fbconf.buf+4*(fbconf.pixels_per_line*y+x);
+  const ubyte* PixelAt(uint x, uint y) {
+    return cast(ubyte*) fbconf.buf + 4 * (fbconf.pixels_per_line * y + x);
   }
 private:
   const FBConf fbconf;
@@ -22,10 +22,10 @@ private:
 
 class PixelWriterRGB : PixelWriter {
 public:
-  this(const FBConf fbc){
+  this(const FBConf fbc) {
     super(fbc);
   }
-  override void Write(uint x, uint y, ref const PixelColor c) {
+  override void Write(const uint x, const uint y, const RGBColor c) {
     auto p = PixelAt(x,y);
     p[0] = c.r;
     p[1] = c.g;
@@ -35,10 +35,10 @@ public:
 
 class PixelWriterBGR : PixelWriter {
 public:
-  this(const FBConf fbc){
+  this(const FBConf fbc) {
     super(fbc);
   }
-  override void Write(uint x, uint y, ref const PixelColor c) {
+  override void Write(const uint x, const uint y, const RGBColor c) {
     auto p = PixelAt(x,y);
     p[0] = c.b;
     p[1] = c.g;
@@ -67,7 +67,7 @@ class Vector2D(T) {
 void FillRectangle(ref PixelWriter writer,
                    ref const Vector2D!uint start,
                    ref const Vector2D!uint size,
-                   ref const PixelColor c) {
+                   ref const RGBColor c) {
   for(int dy=0;dy<size.y;++dy)
     for(int dx=0;dx<size.x;++dx)
       writer.Write(start.x+dx,start.y+dy,c);

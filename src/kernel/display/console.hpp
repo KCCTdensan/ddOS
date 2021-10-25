@@ -3,9 +3,9 @@
 #include "graphics.hpp"
 #include "font.hpp"
 
-static const unsigned int KCONSOLE_BUF_MAX_COL = 162; // 黄金比(適当)
-static const unsigned int KCONSOLE_BUF_MAX_ROW = 100;
-static const PixelColor KCONSOLE_BG = {0,0,0}; // PixelColor 余"白"(黒だけど)
+extern const unsigned int KCONSOLE_BUF_MAX_COL;
+extern const unsigned int KCONSOLE_BUF_MAX_ROW;
+extern const PixelColor KCONSOLE_BG;
 
 class kConsole {
 public:
@@ -22,6 +22,6 @@ private:
   PixelWriter& pixel_writer;
   const PixelColor& bg_color, text_color;
   unsigned int col, row, buf_x, buf_y, start_x, start_y, cursor_col, cursor_row;
-  char text_buf[KCONSOLE_BUF_MAX_ROW][KCONSOLE_BUF_MAX_COL+1];
+  char* text_buf;
   void PutNL(); // NewLine
 };

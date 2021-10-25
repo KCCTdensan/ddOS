@@ -4,11 +4,12 @@ import graphics = display.graphics;
 alias Vec2D = graphics.Vector2D;
 alias RGBColor = graphics.RGBColor;
 
-static const uint KCONSOLE_BUF_MAX_COL=162; // 黄金比(適当)
-static const uint KCONSOLE_BUF_MAX_ROW=100;
-static const RGBColor KCONSOLE_BG={0,0,0}; // RGBColor 余"白"(黒だけど)
+static const uint KCONSOLE_BUF_MAX_COL = 162; // 黄金比(適当)
+static const uint KCONSOLE_BUF_MAX_ROW = 100;
+static const RGBColor KCONSOLE_BG = RGBColor(0,0,0); // RGBColor 余"白"(黒だけど)
 
-struct kConsole {
+extern(C++)
+class KConsole {
 public:
   this(const graphics.PixelWriter* writer_,
        uint horiz_,uint vert_,
@@ -76,4 +77,39 @@ private:
   const RGBColor bg_color, text_color;
   uint col, row, buf_x, buf_y, start_x, start_y, cursor_col, cursor_row;
   char[KCONSOLE_BUF_MAX_ROW][KCONSOLE_BUF_MAX_COL+1] text_buf;
+}
+
+// log
+
+enum LogLevel {
+  kLogError = 3,
+  kLogWarn  = 4,
+  kLogInfo  = 6, // default
+  kLogDebug = 7,
+}
+
+LogLevel log_level = LogLevel.kLogInfo;
+
+KConsole kernel_console;
+
+void SetLogLevel(LogLevel lev) {
+  log_level=lev;
+}
+
+static if(true) {
+  extern(C++)
+  alias PutLog = PutLogScreen;
+} else {
+}
+
+int PutLogScreen(T ...)(LogLevel lev, string fmt, T args) {
+
+  if(lev>log_level) return 0;
+  int res;
+  ubyte[1024] buf;
+
+  res = vsprintf(buf,fmt,args);
+
+  kernel_console.PutStr(buf);
+  return res;
 }

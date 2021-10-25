@@ -1,6 +1,6 @@
 #pragma once
 
-enum LogLevel {
+enum LogLevel { // log.d
   kLogError=3,
   kLogWarn =4,
   kLogInfo =6, // default

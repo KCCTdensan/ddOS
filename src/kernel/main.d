@@ -6,12 +6,11 @@ import display.graphics;
 import display.console;
 
 // cppfunc.cpp
-int printk(T...)(string fmt, ...);
+//int printk(T...)(string fmt, ...);
 //
 
-extern(C++)
-__gshared kConsole* kernel_console;
-ubyte[kConsole.sizeof] kernel_console_buf = void;
+KConsole kernel_console; // 実質ポインタ
+ubyte[__traits(classInstanceSize, KConsole)] kernel_console_buf = void;
 
 // // //
 //ubyte[__traits(classInstanceSize, YourClass)] buffer;
@@ -23,7 +22,6 @@ void KernelMain(ref const FBConf fbconf) {
 
   // pixel_writer
   PixelWriter pixel_writer;
-  //PixelWriter* pixel_writer;
   ubyte[PixelWriterRGB.sizeof] pixel_writer_buf = void;
   final switch(fbconf.pixel_fmt) {
     case PixelFmt.kPixelRGB:
@@ -36,12 +34,12 @@ void KernelMain(ref const FBConf fbconf) {
 
   // kernel_console
   //InitFont();
-  kernel_console = emplace!kConsole(kernel_console_buf,
-      &pixel_writer,
-      fbconf.res_horiz-8,
-      fbconf.res_vert-8,
-      4,4,RGBColor(0,0,0),RGBColor(0x20,0xff,0x20));
-  printk("Kernel console initialized.\n");
+  kernel_console = emplace!KConsole(
+    kernel_console_buf, &pixel_writer,
+    fbconf.res_horiz-8, fbconf.res_vert-8,
+    4, 4, RGBColor(0,0,0), RGBColor(0x20,0xff,0x20));
+
+  //printk("Kernel console initialized.\n");
 
   while(true) asm { hlt; }
 }

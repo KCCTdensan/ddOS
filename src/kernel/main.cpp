@@ -172,7 +172,7 @@ extern "C" void KernelMain(const FBConf& fbconf){
 
   while(true){
     __asm__("cli");
-    if(main_queue->Count()==0){
+    if(main_queue->Count()){
       __asm__("sti\n\thlt");
       continue;
     }

@@ -5,52 +5,47 @@ import fb_conf;
 struct RGBColor {
   ubyte r,g,b;
 }
-//extern(C++)
-//alias PixelColor = RGBColor;
 
-class PixelWriter {
-public:
-  this(const FBConf fbc) { this.fbconf = fbc; }
-  abstract void Write(const uint x, const uint y, const RGBColor c);
-protected:
-  const ubyte* PixelAt(uint x, uint y) {
-    return cast(ubyte*) fbconf.buf + 4 * (fbconf.pixels_per_line * y + x);
-  }
-private:
-  const FBConf fbconf;
-}
-
-class PixelWriterRGB : PixelWriter {
-public:
+// ほんとはクラスとか(vtableとか)使いたいんだけどなー
+struct PixelWriter {
   this(const FBConf fbc) {
-    super(fbc);
+    this.fbconf = fbc;
+    final switch(fbc.pixel_fmt) {
+      case PixelFmt.kPixelRGB:
+        this.write = &PixelWriteRGB;
+        break;
+      case PixelFmt.kPixelBGR:
+        this.write = &PixelWriteBGR;
+        break;
+    }
   }
-  override void Write(const uint x, const uint y, const RGBColor c) {
-    auto p = PixelAt(x,y);
+  //abstract void Write(const uint x, const uint y, const RGBColor c); // class使わせろ
+  void delegate(const uint x, const uint y, const RGBColor c) write;
+
+private: // モジュール内ならアクセスできるというガバガバ
+  const ubyte* PixelAt(uint x, uint y) { // 本来はprotectedなメソッド
+    return cast(ubyte*)/*なぜ？*/ fbconf.buf + 4/*sizeof a pixel*/ * (fbconf.pixels_per_line * y + x);
+  }
+  void PixelWriteRGB(const uint x, const uint y, const RGBColor c) {
+    auto/*ubyte[4]くらいに解釈してほしい*/ p = PixelAt(x, y);
     p[0] = c.r;
     p[1] = c.g;
     p[2] = c.b;
-  }
-}
-
-class PixelWriterBGR : PixelWriter {
-public:
-  this(const FBConf fbc) {
-    super(fbc);
-  }
-  override void Write(const uint x, const uint y, const RGBColor c) {
-    auto p = PixelAt(x,y);
+  };
+  void PixelWriteBGR(const uint x, const uint y, const RGBColor c) {
+    auto p = PixelAt(x, y);
     p[0] = c.b;
     p[1] = c.g;
     p[2] = c.r;
-  }
+  };
+
+  const FBConf fbconf;
 }
 
 // お便利ツールズ
 
-class Vector2D(T) {
-  public:
-  this(T x_,T y_) {
+struct Vector2D(T) {
+  this(T x_, T y_) {
     this.x = x_;
     this.y = y_;
   }
@@ -64,11 +59,11 @@ class Vector2D(T) {
   }
 }
 
-void FillRectangle(ref PixelWriter writer,
-                   ref const Vector2D!uint start,
-                   ref const Vector2D!uint size,
-                   ref const RGBColor c) {
-  for(int dy=0;dy<size.y;++dy)
-    for(int dx=0;dx<size.x;++dx)
-      writer.Write(start.x+dx,start.y+dy,c);
+void FillRectangle(const PixelWriter* writer,
+                   const Vector2D!uint start,
+                   const Vector2D!uint size,
+                   const RGBColor c) {
+  foreach(dy; 0 .. size.y)
+    foreach(dx; 0 .. size.x)
+      writer.write(start.x + dx, start.y + dy, c);
 }

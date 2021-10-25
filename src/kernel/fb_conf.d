@@ -1,3 +1,5 @@
+// これだけ?!
+
 enum PixelFmt {
   kPixelRGB,
   kPixelBGR

@@ -21,9 +21,7 @@ void KernelMain(ref const FBConf fbconf) {
     fbconf.res_horiz-8, fbconf.res_vert-8, 4, 4,
     RGBColor(0,0,0), RGBColor(0x20,0xff,0x20));
 
-  (&pixel_writer).FillRectangle(Vec2D(0,0),Vec2D(200,100),RGBColor(0,0xff,0));
-
-  //kernel_console.putStr("ABC");
+  kernel_console.putStr("ABCDEF");
 
   //printk("Kernel console initialized.\n");
 

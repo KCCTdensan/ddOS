@@ -16,18 +16,19 @@ struct KConsole {
        uint x_, uint y_,
        const RGBColor bg_color_,
        const RGBColor text_color_) {
-    Font_width = 8; // font.dから取得したいけど
-    Font_height = 16;
+    FontInfo fonti = GetFontInfo();
+    font_width = fonti.width; // font.dから取得したいけど
+    font_height = fonti.height;
 
     pixel_writer = writer_;
     bg_color = bg_color_;
     text_color = text_color_;
     cursor_col = cursor_row = 0;
     //text_buf = {{}}; // Dなので初期化済み，ありがたい
-    col = min(KConsole_buf_max_col, horiz_ / Font_width); // 0除算しがち
-    row = min(KConsole_buf_max_row, vert_ / Font_height);
-    buf_x = Font_width * col;
-    buf_y = Font_height * row;
+    col = min(KConsole_buf_max_col, horiz_ / font_width); // 0除算しがち
+    row = min(KConsole_buf_max_row, vert_ / font_height);
+    buf_x = font_width * col;
+    buf_y = font_height * row;
     start_x = x_ + (horiz_ - buf_x) / 2;
     start_y = y_ + (vert_ - buf_y) / 2;
 
@@ -35,25 +36,25 @@ struct KConsole {
     FillRectangle(pixel_writer, Vec2D(start_x,start_y), Vec2D(buf_x,buf_y), bg_color);
   }
   void putStr(string s) {
-    int x = start_x + Font_width * cursor_col,
-        y = start_y + Font_height * cursor_row;
+    int x = start_x + font_width * cursor_col,
+        y = start_y + font_height * cursor_row;
     foreach(c; s)
       switch(c) {
         case '\n':
           putNL();
           x = 0;
-          y = start_y + Font_height * cursor_row;
+          y = start_y + font_height * cursor_row;
           break;
         default:
           WriteFont(pixel_writer, x, y, c, text_color);
           text_buf[cursor_row][cursor_col] = c;
           if(cursor_col < col-1) {
             ++cursor_col;
-            x += Font_width;
+            x += font_width;
           } else {
             putNL();
             x = 0;
-            y = start_y + Font_height * cursor_row;
+            y = start_y + font_height * cursor_row;
           }
       }
   }
@@ -68,10 +69,10 @@ private:
       foreach(cursor_row; 0 .. row-1) {
         memcpy(&text_buf[cursor_row], &text_buf[cursor_row+1], col);
         uint x = 0;
-        uint y = start_y + Font_height * cursor_row;
+        uint y = start_y + font_height * cursor_row;
         foreach(c; text_buf[cursor_row]) {
           WriteFont(pixel_writer, x, y, c, text_color);
-          x += Font_width;
+          x += font_width;
         }
       }
     }
@@ -80,7 +81,7 @@ private:
   PixelWriter* pixel_writer;
   const RGBColor bg_color, text_color;
   uint col, row, buf_x, buf_y, start_x, start_y, cursor_col, cursor_row;
-  ubyte Font_width, Font_height;
+  ubyte font_width, font_height;
   char[KConsole_buf_max_row][KConsole_buf_max_col+1] text_buf;
 }
 

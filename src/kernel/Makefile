@@ -1,7 +1,8 @@
 TARGET = kernel.elf
-OBJS = main.o \
-       display/graphics.o display/console.o display/font.o display/fontascii.o \
-#        support/newlib_support.o support/libcxx_support.o \
+OBJS = main.o display/fontascii.o \
+       display/graphics.o display/console.o display/font.o #\
+       cppfunc.o #\
+       support/newlib_support.o support/libcxx_support.o \
        asmfunc.o cppfunc.o timer.o interrupt.o \
        driver/pci.o \
        driver/usb/memory.o driver/usb/device.o driver/usb/xhci/ring.o driver/usb/xhci/trb.o \

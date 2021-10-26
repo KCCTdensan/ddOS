@@ -228,11 +228,9 @@ EFI_STATUS EFIAPI UefiMain(
     }
   }
 
-  typedef void EntryPoint(const struct FBConf*);
-
-  UINT64 entry_addr = *(UINT64*)(kernel_head_addr+24);
-  EntryPoint* entry_point = (EntryPoint*)entry_addr;
-  entry_point(&fbconf);
+typedef void EntryPointType(const struct FBConf*, const struct MemoryMap&);
+EntryPointType* entry_point = (EntryPointType*)entry_addr;
+entry_point(&config, &memmap);
 
   Halt();
   return EFI_SUCCESS;

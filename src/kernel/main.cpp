@@ -73,7 +73,8 @@ void IntHandlerXHCI(InterruptFrame* frame) {
 
 
 
-extern "C" void KernelMain(const FBConf& fbconf){
+extern "C" void KernelMain(const FBConf& fbconf, const MemMap& memory_map){
+
   // InitFont();
 
   // pixel_writer

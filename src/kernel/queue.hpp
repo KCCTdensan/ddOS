@@ -62,3 +62,7 @@ const T& ArrayQueue<T>::Front() const {
   return data_[read_pos_];
 }
 
+template <typename T>
+size_t ArrayQueue<T>::Count() const {
+  return count_;
+}

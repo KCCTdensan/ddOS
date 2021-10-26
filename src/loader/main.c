@@ -14,8 +14,8 @@
 // そのうち確認する
 
 #include "elf.hpp"
-#include "memmap.hpp"
-#include "fb_conf.hpp"
+#include "memmap.h"
+#include "fb_conf.h"
 
 void Halt(){
   while(1) __asm__("hlt");
@@ -228,11 +228,12 @@ EFI_STATUS EFIAPI UefiMain(
     }
   }
 
-  typedef void EntryPoint(const struct FBConf*);
+  typedef void EntryPoint(const struct FBConf*
+                          const struct MemMap*);
 
   UINT64 entry_addr = *(UINT64*)(kernel_head_addr+24);
   EntryPoint* entry_point = (EntryPoint*)entry_addr;
-  entry_point(&fbconf);
+  entry_point(&fbconf, &memmap);
 
   Halt();
   return EFI_SUCCESS;

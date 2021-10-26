@@ -1,4 +1,5 @@
 import display.console;
+import lib.string;
 
 enum LogLevel {
   Error = 3,

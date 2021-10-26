@@ -1,8 +1,8 @@
 TARGET = kernel.elf
-OBJS = main.o display/fontascii.o \
+OBJS = main.o asmfunc.o cppfunc.o display/fontascii.o \
        display/graphics.o display/console.o display/font.o \
-       cppfunc.o support/newlib_support.o support/libcxx_support.o #\
-       asmfunc.o cppfunc.o timer.o interrupt.o \
+       support/newlib_support.o support/libcxx_support.o #\
+       timer.o interrupt.o \
        driver/pci.o \
        driver/usb/memory.o driver/usb/device.o driver/usb/xhci/ring.o driver/usb/xhci/trb.o \
        driver/usb/xhci/xhci.o driver/usb/xhci/port.o driver/usb/xhci/device.o driver/usb/xhci/devmgr.o \
@@ -30,7 +30,7 @@ clean:
            */*/*/*.o */*/*/.*.d
 
 kernel.elf: $(OBJS) Makefile
-	ld.lld $(LDFLAGS) -o kernel.elf $(OBJS) -lc -lc++ -lc++abi #-lm -lfreetype
+	ld.lld $(LDFLAGS) -o kernel.elf $(OBJS) -lc -lc++ #-lc++abi #-lm -lfreetype
 
 %.o: %.d Makefile
 	ldc2 $(LDCFLAGS) -c $< --of=$@

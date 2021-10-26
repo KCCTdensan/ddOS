@@ -1,14 +1,18 @@
-#include <cstdio>
+#include <cstdint>
+// #include <cstdio>
 
-int sprintf(const char* fmt, ...) {
-  va_list args;
-  int res;
-  char buf[1024];
+alignas(16) // dでやったらリンクエラー
+uint8_t kernel_main_stack[1024 * 1024];
 
-  va_start(args, fmt);
-  res = vsprintf(buf, fmt, args);
-  va_end(args);
-}
+// int sprintf(const char* fmt, ...) {
+//   va_list args;
+//   int res;
+//   char buf[1024];
+
+//   va_start(args, fmt);
+//   res = vsprintf(buf, fmt, args);
+//   va_end(args);
+// }
 
 // int sprintk(const char* fmt,...){
 //     va_list ap;

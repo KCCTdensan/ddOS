@@ -1,49 +1,65 @@
 import fb_conf;
+import memmap;
 //import error;
 import display.graphics;
 import display.console;
 import log;
 
 alias Vec2D = display.graphics.Vector2D!uint;
+alias uintptr = uint;
 
 extern(C)
-void KernelMain(ref const FBConf fbconf) {
+void KernelMainNewStack(ref const FBConf fbconf, ref const MemMap memmap) {
   // レイアウト的なの用意したい
+  auto kFrameWidth = fbconf.res_horiz;
+  auto kFrameHeight = fbconf.res_vert;
   auto layout_single = fbconf.res_vert < 512;
   auto layout_right_pane_width = 256;
 
   // pixel_writer
   auto pixel_writer = PixelWriter(fbconf); // fbconfからPixelのフォーマットを察してくれる
   (&pixel_writer).FillRectangle(Vec2D(0,0),
-    Vec2D(fbconf.res_horiz,fbconf.res_vert),RGBColor(0,0,0));
+    Vec2D(kFrameWidth,kFrameHeight),RGBColor(0,0,0));
 
   // kernel_console
   auto kernel_console = layout_single
     ? KConsole(&pixel_writer,
-        fbconf.res_horiz-8, fbconf.res_vert-8, 4, 4,
+        kFrameWidth-8, kFrameHeight-8, 4, 4,
         RGBColor(0,0,0), RGBColor(0x20,0xff,0x20))
     : KConsole(&pixel_writer,
-        fbconf.res_horiz-layout_right_pane_width-8, fbconf.res_vert-8, 4, 4,
+        kFrameWidth-layout_right_pane_width-8, kFrameHeight-8, 4, 4,
         RGBColor(0,0,0), RGBColor(0xff,0xff,0xff));
+
+  // temp 要置き換え
+  void printk(string s) {
+    (&kernel_console).putStr(s);
+  }
+  //
 
   // right info pane
   if(!layout_single) {
-    auto margin_left = fbconf.res_horiz-layout_right_pane_width-8;
+    auto margin_left = kFrameWidth-layout_right_pane_width-8;
     (&pixel_writer).FillRectangle(
         Vec2D(margin_left,0),
-        Vec2D(2,fbconf.res_vert),
+        Vec2D(2,kFrameHeight),
         RGBColor(0x40,0x40,0x40));
+
+    // QR (27+200+27 x 27+200+27)
   }
 
   // showing log
   extern(C++)
   __gshared LogLevel log_level = LogLevel.Info;
 
-  (&kernel_console).putStr("Welcome to ddOS!\n");
+  printk("Welcome to ddOS!\n");
 
-  //alias printk = kernel_console.putLog();
-
-  //(&kernel_console).printk("Kernel console initialized.%d\n",2);
+  // メモリ
+  for(auto iter = cast(uintptr) memmap.buf;
+      iter < cast(uintptr) memmap.buf + memmap.map_s;
+      iter += memmap.desc_s) {
+    auto desc = cast(MemDesc*) iter;
+    //a
+  }
 
   while(true) asm { hlt; }
 }

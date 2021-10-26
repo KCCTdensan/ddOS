@@ -2,8 +2,6 @@
 #include <cstddef>
 
 #include "elf.hpp"
-#include "memmap.hpp"
-#include "fb_conf.hpp"
 #include "graphics.hpp"
 #include "font.hpp"
 #include "console.hpp"
@@ -58,8 +56,6 @@ extern "C" void KernelMain(const FBConf& fbconf){
   /*
     Moved.
   */
-
-  PutLog(kLogInfo,"Kernel console initialized.\n");
 
   // pci
   PutLog(kLogInfo,"pci::ScanAllBus ...");

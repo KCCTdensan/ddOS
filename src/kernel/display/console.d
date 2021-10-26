@@ -16,21 +16,21 @@ struct KConsole {
        uint x_, uint y_,
        const RGBColor bg_color_,
        const RGBColor text_color_) {
-    FontInfo fonti = GetFontInfo();
-    font_width = fonti.width; // font.dから取得したいけど
-    font_height = fonti.height;
+    FontSize fontsize = GetFontSize();
 
+    cursor_col = cursor_row = row_index = 0;
     pixel_writer = writer_;
     bg_color = bg_color_;
     text_color = text_color_;
-    cursor_col = cursor_row = 0;
-    //text_buf = {{}}; // Dなので初期化済み，ありがたい
-    col = min(KConsole_buf_max_col, horiz_ / font_width); // 0除算しがち
+    font_width = fontsize.w;
+    font_height = fontsize.h;
+    col = min(KConsole_buf_max_col, horiz_ / font_width);
     row = min(KConsole_buf_max_row, vert_ / font_height);
     buf_x = font_width * col;
     buf_y = font_height * row;
     start_x = x_ + (horiz_ - buf_x) / 2;
     start_y = y_ + (vert_ - buf_y) / 2;
+    // foreach(line;text_buf)line[0]='\0'; // Dなので初期化済み，ありがたい
 
     FillRectangle(pixel_writer, Vec2D(x_,y_), Vec2D(horiz_,vert_), KConsole_bgc);
     FillRectangle(pixel_writer, Vec2D(start_x,start_y), Vec2D(buf_x,buf_y), bg_color);
@@ -78,44 +78,10 @@ private:
     }
   }
 
-  PixelWriter* pixel_writer;
+  uint cursor_col, cursor_row, row_index;
+  const PixelWriter* pixel_writer;
   const RGBColor bg_color, text_color;
-  uint col, row, buf_x, buf_y, start_x, start_y, cursor_col, cursor_row;
-  ubyte font_width, font_height;
+  const ubyte font_width, font_height;
+  const uint col, row, buf_x, buf_y, start_x, start_y;
   char[KConsole_buf_max_row][KConsole_buf_max_col+1] text_buf;
 }
-
-// log
-
-//enum LogLevel {
-//  kLogError = 3,
-//  kLogWarn  = 4,
-//  kLogInfo  = 6, // default
-//  kLogDebug = 7,
-//}
-
-//LogLevel log_level = LogLevel.kLogInfo;
-
-//KConsole kernel_console;
-
-//void SetLogLevel(LogLevel lev) {
-//  log_level=lev;
-//}
-
-//static if(true) {
-//  extern(C++)
-//  alias PutLog = PutLogScreen;
-//} else {
-//}
-
-//int PutLogScreen(T ...)(LogLevel lev, string fmt, T args) {
-
-//  if(lev>log_level) return 0;
-//  int res;
-//  ubyte[1024] buf;
-
-//  res = vsprintf(buf,fmt,args);
-
-//  kernel_console.PutStr(buf);
-//  return res;
-//}

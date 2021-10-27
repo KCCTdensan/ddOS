@@ -8,6 +8,9 @@ import log;
 alias Vec2D = display.graphics.Vector2D!uint;
 alias uintptr = uint;
 
+align(16) extern(C)
+__gshared ubyte[1024 * 1024] kernel_main_stack;
+
 extern(C)
 void KernelMainNewStack(ref const FBConf fbconf,
                         ref const MemMap memmap) {

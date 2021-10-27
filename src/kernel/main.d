@@ -50,11 +50,22 @@ void KernelMainNewStack(ref const FBConf fbconf, ref const MemMap memmap) {
         RGBColor(0x40,0x40,0x40));
 
     // QR (25 x 25)
-    int[25][25] data = mixin(import("qr.txt")); // ~~/src/assets/qr.txt
 
-    foreach(dy; 0 .. 25)
-      foreach(dx; 0 .. 25)
-        if(j[j][i]==1){pixel_writer.write(j, i, RGBColor(0xff, 0xff, 0xff));
+    bool [25][25] qrData = mixin(import("qr.txt")); // ~~/src/assets/qr.txt
+
+    // 余白
+    int padding_left = 30;
+
+    foreach(y; 0 .. 258)
+      foreach(x; 0 .. 258)
+        pixel_writer.write(margin_left+x, y, RGBColor(0xff,0xff,0xff));
+
+    foreach(y; 0 .. 25)
+      foreach(x; 0 .. 25)
+        foreach(dy; 0 .. 8)
+          foreach(dx; 0 .. 8)
+            if(qrData[y][x])
+              pixel_writer.write(margin_left+x*8+dx+padding_left, y*8+dy+padding_left, RGBColor(0,0,0));
   }
 
   // showing log

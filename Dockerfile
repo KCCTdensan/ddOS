@@ -133,6 +133,7 @@ ENV CPPFLAGS="\
   -D_GNU_SOURCE \
   -D_POSIX_TIMERS \
   -DEFIAPI='__attribute__((ms_abi))'"
+ENV LDCFLAGS="-J=../assets"
 ENV LDFLAGS="-L$HOMEDIR/mikanos_libs/x86_64-elf/lib"
 
 ### .bashrc

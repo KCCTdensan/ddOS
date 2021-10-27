@@ -1,4 +1,6 @@
-import fb_conf;
+module graphics.graphics; // graphicsだけだと被るらしい
+
+import graphics.frame_buffer;
 
 // Pixel Writer
 

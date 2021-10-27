@@ -1,10 +1,10 @@
 import std.algorithm : min;
-import core.stdc.string : memcpy;
+//import core.stdc.string : memcpy;
 
-import display.graphics;
-import display.font;
+import graphics.graphics;
+import graphics.font;
 
-alias Vec2D = display.graphics.Vector2D!uint;
+alias Vec2D = Vector2D!uint;
 
 const uint KConsole_buf_max_col = 162; // 黄金比(適当)
 const uint KConsole_buf_max_row = 100;

@@ -1,17 +1,20 @@
-import fb_conf;
-import memmap;
 import asmfunc;
+import memory_map;
+import lib.string;
 //import error;
-import display.graphics;
-import display.console;
-import display.font;
+import graphics.frame_buffer;
+import graphics.graphics;
+import graphics.console;
+import graphics.font;
 import log;
 
-alias Vec2D = display.graphics.Vector2D!uint;
+alias Vec2D = Vector2D!uint;
 alias uintptr = uint;
 
 extern(C)
 void KernelMain(ref const FBConf fbconf, ref const MemMap memmap) {
+  static LogLevel log_level = LogLevel.Info;
+
   // レイアウト的なの用意したい
   auto kFrameWidth = fbconf.res_horiz;
   auto kFrameHeight = fbconf.res_vert;
@@ -32,11 +35,14 @@ void KernelMain(ref const FBConf fbconf, ref const MemMap memmap) {
         kFrameWidth-layout_right_pane_width-8-2, kFrameHeight-8, 4, 4,
         RGBColor(0,0,0), RGBColor(0x20,0xff,0x20));
 
-  // temp 要置き換え
-  void printk(string s) {
-    (&kernel_console).putStr(s);
+  // とりあえず
+  void printk(T ...)(string fmt, T args) {
+    char[1024] buf = void;
+    tsprintf(buf.ptr, size_t(1024), fmt, args);
+    (&kernel_console).putStr(buf);
   }
-  //
+
+  printk("Welcome to ddOS!\n");
 
   // right info pane
   if(!layout_single) {
@@ -58,12 +64,6 @@ void KernelMain(ref const FBConf fbconf, ref const MemMap memmap) {
             foreach(dx; 0 .. 8)
               pixel_writer.write(margin_left+32+8*x+dx,32+8*y+dy,RGBColor(0,0,0));
   }
-
-  // showing log
-  extern(C++)
-  __gshared LogLevel log_level = LogLevel.Info;
-
-  printk("Welcome to ddOS!\n");
 
   // メモリ
   for(auto iter = cast(uintptr) memmap.buf;

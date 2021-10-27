@@ -1,5 +1,3 @@
-// これだけ?!?!
-
 struct MemMap {
   ulong buf_s; // size
   void* buf;

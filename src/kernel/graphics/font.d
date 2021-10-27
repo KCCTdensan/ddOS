@@ -1,4 +1,4 @@
-import display.graphics;
+import graphics.graphics;
 
 private {
   extern extern(C) {
@@ -20,7 +20,7 @@ private {
   // WriteFont()の中に入れるか迷う
   void write(const FontBuf* fonts,
              const PixelWriter* writer,
-             int x,int y, uint c,
+             int x,int y, char c,
              const RGBColor color) {
     foreach(dy; 0 .. fonts.height)
       foreach(dx; 0 .. fonts.width)

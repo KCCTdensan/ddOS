@@ -14,8 +14,8 @@
 // そのうち確認する
 
 #include "elf.hpp"
-#include "memmap.h"
-#include "fb_conf.h"
+#include "memory_map.h"
+#include "frame_buffer.h"
 
 void Halt(){
   while(1) __asm__("hlt");

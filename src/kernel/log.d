@@ -1,4 +1,4 @@
-import display.console;
+import graphics.console;
 import lib.string;
 
 enum LogLevel {

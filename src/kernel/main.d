@@ -1,5 +1,6 @@
 import fb_conf;
 import memmap;
+import asmfunc;
 //import error;
 import display.graphics;
 import display.console;

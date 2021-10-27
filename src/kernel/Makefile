@@ -1,5 +1,5 @@
 TARGET = kernel.elf
-OBJS = main.o asmfunc_asm.o display/fontascii.o \
+OBJS = main.o asm.o display/fontascii.o \
        asmfunc.o \
        display/graphics.o display/console.o display/font.o \
        support/newlib_support.o support/libcxx_support.o #\
@@ -17,7 +17,7 @@ CXXFLAGS += -O2 -Wall -g --target=x86_64-elf -ffreestanding -mno-red-zone \
             -fno-exceptions -fno-rtti -std=c++17
 LDCFLAGS += -O2 -release -betterC \
             --extern-std=c++17
-LDFLAGS  += --entry KernelMain -z norelro --image-base 0x100000 --static
+LDFLAGS  += --entry _main -z norelro --image-base 0x100000 --static
 
 
 .PHONY: all
@@ -52,7 +52,7 @@ kernel.elf: $(OBJS) Makefile
 	$(eval OBJ = $(<:.c=.o))
 	sed --in-place 's|$(notdir $(OBJ))|$(OBJ)|' $@
 
-%.o: %.asm Makefile
+%.o: %.s Makefile
 	nasm -f elf64 -o $@ $<
 
 %.bin: %.bdf

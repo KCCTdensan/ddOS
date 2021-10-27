@@ -1,10 +1,22 @@
-; asmfunc.asm
-;
 ; System V AMD64 Calling Convention
 ; Registers: RDI, RSI, RDX, RCX, R8, R9
 
 bits 64
+
+extern KernelMain
+
+section .bss align=16
+kernel_main_stack:
+  resb 1024 * 1024
+
 section .text
+global _main
+_main:
+    mov rsp, kernel_main_stack + 1024 * 1024
+    call KernelMain
+.fin: ; KernelMain doesn't have return addr
+    hlt
+    jmp .fin
 
 global IoOut32  ; void IoOut32(uint16_t addr, uint32_t data);
 IoOut32:
@@ -75,14 +87,3 @@ global SetCR3  ; void SetCR3(uint64_t value);
 SetCR3:
     mov cr3, rdi
     ret
-
-extern kernel_main_stack
-extern KernelMainNewStack
-
-global KernelMain
-KernelMain:
-    mov rsp, kernel_main_stack + 1024 * 1024
-    call KernelMainNewStack
-.fin: ; KernelMain doesn't have return addr
-    hlt
-    jmp .fin

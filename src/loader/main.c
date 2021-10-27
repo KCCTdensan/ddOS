@@ -228,7 +228,7 @@ EFI_STATUS EFIAPI UefiMain(
     }
   }
 
-  typedef void EntryPoint(const struct FBConf*
+  typedef void EntryPoint(const struct FBConf*,
                           const struct MemMap*);
 
   UINT64 entry_addr = *(UINT64*)(kernel_head_addr+24);

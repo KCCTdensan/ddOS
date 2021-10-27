@@ -83,7 +83,27 @@ SetDSAll:
     mov gs, di
     ret
 
+global GetCR0  ; uint64_t GetCR0();
+GetCR0:
+    mov rax, cr0
+    ret
+
+global SetCR0  ; void SetCR0(uint64_t value);
+SetCR0:
+    mov cr0, rdi
+    ret
+
+global GetCR2  ; uint64_t GetCR2();
+GetCR2:
+    mov rax, cr2
+    ret
+
 global SetCR3  ; void SetCR3(uint64_t value);
 SetCR3:
     mov cr3, rdi
+    ret
+
+global GetCR3  ; uint64_t GetCR3();
+GetCR3:
+    mov rax, cr3
     ret

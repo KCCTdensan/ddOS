@@ -1,7 +1,9 @@
 import asmfunc;
-import memory_map;
+import segment;
 import lib.string;
 //import error;
+import memory.memory_map;
+import memory.paging;
 import graphics.frame_buffer;
 import graphics.graphics;
 import graphics.console;
@@ -37,9 +39,10 @@ void KernelMain(ref const FBConf fbconf, ref const MemMap memmap) {
 
   // とりあえず
   void printk(T ...)(string fmt, T args) {
-    char[1024] buf = void;
-    tsprintf(buf.ptr, size_t(1024), fmt, args);
-    (&kernel_console).putStr(buf);
+    (&kernel_console).putStr(fmt);
+  //  char[1024] buf = void;
+  //  tsprintf(buf.ptr, size_t(1024), fmt, args);
+  //  (&kernel_console).putStr(buf);
   }
 
   printk("Welcome to ddOS!\n");
@@ -65,13 +68,22 @@ void KernelMain(ref const FBConf fbconf, ref const MemMap memmap) {
               pixel_writer.write(margin_left+32+8*x+dx,32+8*y+dy,RGBColor(0,0,0));
   }
 
-  // メモリ
+  // メモリマップ
   for(auto iter = cast(uintptr) memmap.buf;
       iter < cast(uintptr) memmap.buf + memmap.map_s;
       iter += memmap.desc_s) {
     auto desc = cast(MemDesc*) iter;
-    
+    //
   }
+
+  SetupSegments();
+  const ushort kernel_cs = 1 << 3;
+  const ushort kernel_ss = 2 << 3;
+  SetDSAll(0);
+  SetCSSS(kernel_cs, kernel_ss);
+  SetupIdentityPageTable();
+
+  printk("done.");
 
   while(true) asm { hlt; }
 }

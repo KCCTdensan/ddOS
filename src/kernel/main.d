@@ -13,7 +13,7 @@ void KernelMainNewStack(ref const FBConf fbconf, ref const MemMap memmap) {
   // レイアウト的なの用意したい
   auto kFrameWidth = fbconf.res_horiz;
   auto kFrameHeight = fbconf.res_vert;
-  auto layout_single = fbconf.res_vert < 512;
+  auto layout_single = kFrameWidth < 512;
   auto layout_right_pane_width = 256;
 
   // pixel_writer

@@ -9,7 +9,8 @@ alias Vec2D = display.graphics.Vector2D!uint;
 alias uintptr = uint;
 
 extern(C)
-void KernelMainNewStack(ref const FBConf fbconf, ref const MemMap memmap) {
+void KernelMainNewStack(ref const FBConf fbconf,
+                        ref const MemMap memmap) {
   // レイアウト的なの用意したい
   auto kFrameWidth = fbconf.res_horiz;
   auto kFrameHeight = fbconf.res_vert;
@@ -18,7 +19,7 @@ void KernelMainNewStack(ref const FBConf fbconf, ref const MemMap memmap) {
 
   // pixel_writer
   auto pixel_writer = PixelWriter(fbconf); // fbconfからPixelのフォーマットを察してくれる
-  (&pixel_writer).FillRectangle(Vec2D(0,0),
+  FillRectangle(&pixel_writer,Vec2D(0,0),
     Vec2D(kFrameWidth,kFrameHeight),RGBColor(0,0,0));
 
   // kernel_console
@@ -32,14 +33,14 @@ void KernelMainNewStack(ref const FBConf fbconf, ref const MemMap memmap) {
 
   // temp 要置き換え
   void printk(string s) {
-    (&kernel_console).putStr(s);
+    kernel_console.putStr(s);
   }
   //
 
   // right info pane
   if(!layout_single) {
     auto margin_left = kFrameWidth-layout_right_pane_width-8;
-    (&pixel_writer).FillRectangle(
+    FillRectangle(&pixel_writer,
         Vec2D(margin_left,0),
         Vec2D(2,kFrameHeight),
         RGBColor(0x40,0x40,0x40));

@@ -3,23 +3,23 @@ import memmap;
 //import error;
 import display.graphics;
 import display.console;
+import display.font;
 import log;
 
 alias Vec2D = display.graphics.Vector2D!uint;
 alias uintptr = uint;
 
 extern(C)
-void KernelMainNewStack(ref const FBConf fbconf,
-                        ref const MemMap memmap) {
+void KernelMainNewStack(ref const FBConf fbconf, ref const MemMap memmap) {
   // レイアウト的なの用意したい
   auto kFrameWidth = fbconf.res_horiz;
   auto kFrameHeight = fbconf.res_vert;
-  auto layout_single = kFrameWidth < 512;
+  auto layout_single = fbconf.res_vert < 512;
   auto layout_right_pane_width = 256;
 
   // pixel_writer
   auto pixel_writer = PixelWriter(fbconf); // fbconfからPixelのフォーマットを察してくれる
-  FillRectangle(&pixel_writer,Vec2D(0,0),
+  (&pixel_writer).FillRectangle(Vec2D(0,0),
     Vec2D(kFrameWidth,kFrameHeight),RGBColor(0,0,0));
 
   // kernel_console
@@ -33,19 +33,54 @@ void KernelMainNewStack(ref const FBConf fbconf,
 
   // temp 要置き換え
   void printk(string s) {
-    kernel_console.putStr(s);
+    (&kernel_console).putStr(s);
   }
   //
 
   // right info pane
   if(!layout_single) {
     auto margin_left = kFrameWidth-layout_right_pane_width-8;
-    FillRectangle(&pixel_writer,
+    (&pixel_writer).FillRectangle(
         Vec2D(margin_left,0),
         Vec2D(2,kFrameHeight),
         RGBColor(0x40,0x40,0x40));
 
     // QR (27+200+27 x 27+200+27)
+    int l = [25][25];
+    l = {{1,1,1,1,1,1,1,0,1,0,1,1,1,1,0,0,0,0,1,1,1,1,1,1,1}, 
+    {1,0,0,0,0,0,1,0,0,1,1,0,0,1,0,0,0,0,1,0,0,0,0,0,1}, 
+    {1,0,1,1,1,0,1,0,0,0,1,1,0,1,1,0,1,0,1,0,1,1,1,0,1}, 
+    {1,0,1,1,1,0,1,0,0,0,0,1,1,1,1,0,1,0,1,0,1,1,1,0,1}, 
+    {1,0,1,1,1,0,1,0,0,1,0,0,1,1,1,0,1,0,1,0,1,1,1,0,1}, 
+    {1,0,0,0,0,0,1,0,0,0,1,1,1,1,1,0,0,0,1,0,0,0,0,0,1}, 
+    {1,1,1,1,1,1,1,0,1,0,1,0,1,0,1,0,1,0,1,1,1,1,1,1,1}, 
+    {0,0,0,0,0,0,0,0,1,0,1,0,0,1,1,1,0,0,0,0,0,0,0,0,0}, 
+    {1,1,0,1,1,0,1,0,0,1,1,0,0,0,1,1,0,0,1,0,0,0,0,0,1}, 
+    {0,1,0,0,1,1,0,0,1,1,0,1,0,1,1,1,1,0,0,1,1,1,1,1,0}, 
+    {0,1,1,0,0,0,1,0,1,0,1,1,0,1,1,1,0,0,1,0,1,1,0,0,1}, 
+    {0,0,0,0,1,1,0,0,1,1,1,1,0,0,0,0,0,1,1,1,0,1,1,1,1}, 
+    {1,1,0,1,1,0,1,1,1,1,0,1,0,0,0,1,1,1,1,1,0,0,0,0,1}, 
+    {1,1,0,0,1,1,0,0,1,1,0,1,0,1,1,1,1,0,0,0,1,0,0,1,0}, 
+    {1,1,1,0,0,1,1,0,1,0,1,0,0,1,1,1,1,1,0,0,1,1,1,1,1}, 
+    {1,0,0,1,1,1,0,1,0,1,1,1,0,0,0,1,0,1,1,1,0,1,1,0,1}, 
+    {1,0,0,1,0,1,1,0,1,0,0,0,1,1,0,0,1,1,1,1,1,0,1,1,0}, 
+    {0,0,0,0,0,0,0,0,1,0,1,0,0,0,1,0,1,0,0,0,1,0,1,1,0}, 
+    {1,1,1,1,1,1,1,0,0,1,0,1,1,1,0,0,1,0,1,0,1,0,0,0,1}, 
+    {1,0,0,0,0,0,1,0,0,0,1,1,1,1,1,0,1,0,0,0,1,0,0,1,1}, 
+    {1,0,1,1,1,0,1,0,1,1,1,0,1,0,0,1,1,1,1,1,1,0,0,1,0}, 
+    {1,0,1,1,1,0,1,0,1,0,1,1,0,1,1,1,0,1,1,0,0,0,0,1,1}, 
+    {1,0,1,1,1,0,1,0,0,1,1,1,0,1,0,1,0,1,0,0,1,1,1,1,1}, 
+    {1,0,0,0,0,0,1,0,1,0,0,1,1,0,1,1,0,0,0,1,1,0,1,1,1}, 
+    {1,1,1,1,1,1,1,0,1,0,0,1,1,0,0,0,1,0,0,0,0,1,0,0,1}}
+
+
+    for(int i=0;i<25;i++){
+      for(int j=0;j<25;j++){
+        if(j[j][i]==1){pixel_writer.write(j, i, RGBColor(0xff, 0xff, 0xff));
+      }
+    }
+    
+        
   }
 
   // showing log

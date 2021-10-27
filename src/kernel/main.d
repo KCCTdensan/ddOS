@@ -68,7 +68,7 @@ void KernelMainNewStack(ref const FBConf fbconf, ref const MemMap memmap) {
       iter < cast(uintptr) memmap.buf + memmap.map_s;
       iter += memmap.desc_s) {
     auto desc = cast(MemDesc*) iter;
-    //a
+    
   }
 
   while(true) asm { hlt; }

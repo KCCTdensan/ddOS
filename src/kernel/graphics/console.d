@@ -42,7 +42,7 @@ struct KConsole {
       switch(c) {
         case '\n':
           putNL();
-          x = 0;
+          x = start_x;
           y = start_y + font_height * cursor_row;
           break;
         default:
@@ -53,7 +53,7 @@ struct KConsole {
             x += font_width;
           } else {
             putNL();
-            x = 0;
+            x = start_x;
             y = start_y + font_height * cursor_row;
           }
       }
@@ -68,7 +68,7 @@ private:
       FillRectangle(pixel_writer, Vec2D(start_x,start_y), Vec2D(buf_x,buf_y), bg_color);
       foreach(cursor_row; 0 .. row-1) {
         memcpy(text_buf[cursor_row].ptr, text_buf[cursor_row+1].ptr, col); // 怪レい独自の関数
-        uint x = 0;
+        uint x = start_x;
         uint y = start_y + font_height * cursor_row;
         foreach(c; text_buf[cursor_row]) {
           WriteFont(pixel_writer, x, y, c, text_color);

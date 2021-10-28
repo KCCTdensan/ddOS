@@ -2,7 +2,7 @@ TARGET = kernel.elf
 OBJS = main.o asm.o asmfunc.o \
        lib/string.o \
        graphics/graphics.o graphics/font.o graphics/fontascii.o graphics/console.o \
-       segment.o memory/memory_map.o memory/paging.o \
+       memory/memory_map.o memory/segment.o memory/paging.o \
        support/newlib_support.o support/libcxx_support.o #\
        timer.o interrupt.o \
        driver/pci.o \

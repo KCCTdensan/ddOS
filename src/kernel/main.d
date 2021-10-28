@@ -76,14 +76,12 @@ void KernelMain(ref const FBConf fbconf, ref const MemMap memmap) {
     //
   }
 
-  SetupSegments();
-  const ushort kernel_cs = 1 << 3;
-  const ushort kernel_ss = 2 << 3;
-  SetDSAll(0);
-  SetCSSS(kernel_cs, kernel_ss);
-  SetupIdentityPageTable();
-
-  printk("done.");
+  //SetupSegments();
+  //const ushort kernel_cs = 1 << 3;
+  //const ushort kernel_ss = 2 << 3;
+  //SetDSAll(0);
+  //SetCSSS(kernel_cs, kernel_ss);
+  //SetupIdentityPageTable();
 
   while(true) asm { hlt; }
 }

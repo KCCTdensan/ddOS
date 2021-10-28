@@ -1,6 +1,6 @@
 import std.algorithm : min;
-//import core.stdc.string : memcpy;
 
+import lib.string;
 import graphics.graphics;
 import graphics.font;
 
@@ -67,7 +67,7 @@ private:
     else {
       FillRectangle(pixel_writer, Vec2D(start_x,start_y), Vec2D(buf_x,buf_y), bg_color);
       foreach(cursor_row; 0 .. row-1) {
-        memcpy(&text_buf[cursor_row], &text_buf[cursor_row+1], col); // 怪レい
+        memcpy(text_buf[cursor_row].ptr, text_buf[cursor_row+1].ptr, col); // 怪レい独自の関数
         uint x = 0;
         uint y = start_y + font_height * cursor_row;
         foreach(c; text_buf[cursor_row]) {

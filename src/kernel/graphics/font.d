@@ -3,13 +3,13 @@ import graphics.graphics;
 private {
   extern extern(C) {
     // ASCII
-    const FontBuf _binary_display_fontascii_bin_start; // aliased as font_ascii
-    //const ubyte _binary_display_fontascii_bin_start;
-    //const ubyte _binary_display_fontascii_bin_end;
-    //const ubyte _binary_display_fontascii_bin_size;
+    const FontBuf _binary_graphics_fontascii_bin_start; // aliased as font_ascii
+    //const ubyte _binary_graphics_fontascii_bin_start;
+    //const ubyte _binary_graphics_fontascii_bin_end;
+    //const ubyte _binary_graphics_fontascii_bin_size;
   }
 
-  alias font_ascii = _binary_display_fontascii_bin_start;
+  alias font_ascii = _binary_graphics_fontascii_bin_start;
 
   struct FontBuf {
     ubyte width; // up to 8

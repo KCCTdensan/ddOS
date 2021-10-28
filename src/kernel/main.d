@@ -1,8 +1,8 @@
 import asmfunc;
-import segment;
 import lib.string;
 //import error;
 import memory.memory_map;
+import memory.segment;
 import memory.paging;
 import graphics.frame_buffer;
 import graphics.graphics;
@@ -14,7 +14,8 @@ alias Vec2D = Vector2D!uint;
 alias uintptr = uint;
 
 extern(C)
-void KernelMain(ref const FBConf fbconf, ref const MemMap memmap) {
+void KernelMain(ref const FBConf fbconf,
+                ref const MemMap memmap) {
   static LogLevel log_level = LogLevel.Info;
 
   // レイアウト的なの用意したい
@@ -37,16 +38,6 @@ void KernelMain(ref const FBConf fbconf, ref const MemMap memmap) {
         kFrameWidth-layout_right_pane_width-8-2, kFrameHeight-8, 4, 4,
         RGBColor(0,0,0), RGBColor(0x20,0xff,0x20));
 
-  // とりあえず
-  void printk(T ...)(string fmt, T args) {
-    (&kernel_console).putStr(fmt);
-  //  char[1024] buf = void;
-  //  tsprintf(buf.ptr, size_t(1024), fmt, args);
-  //  (&kernel_console).putStr(buf);
-  }
-
-  printk("Welcome to ddOS!\n");
-
   // right info pane
   if(!layout_single) {
     auto margin_left = kFrameWidth-layout_right_pane_width; // 2: border line
@@ -68,20 +59,46 @@ void KernelMain(ref const FBConf fbconf, ref const MemMap memmap) {
               pixel_writer.write(margin_left+32+8*x+dx,32+8*y+dy,RGBColor(0,0,0));
   }
 
+  // とりあえず
+  void printk(T ...)(string fmt, T args) {
+    (&kernel_console).putStr(fmt);
+  //  char[1024] buf = void;
+  //  tsprintf(buf.ptr, size_t(1024), fmt, args);
+  //  (&kernel_console).putStr(buf);
+  }
+
+  printk("Welcome to ddOS!\n");
+
+  // セグメント(最低限)
+  // GDTとやらをカーネルのスタック領域に移動するだけ
+  SegDesc[3] gdt;
+  {
+    gdt[0].data=0;
+    SetCodeSegment(gdt[1],SegDescType.kExecuteRead,0,0,0xfffff);
+    SetDataSegment(gdt[2],SegDescType.kReadWrite,0,0,0xfffff);
+    LoadGDT(gdt.sizeof-1,cast(uint)&gdt[0]);
+    SetDSAll(0);
+    SetCSSS(1<<3,2<<3);
+  }
+
+  //SetupIdentityPageTable(); // 落ちる
+
   // メモリマップ
+  printk("memory_map: %p\n", &memmap);
   for(auto iter = cast(uintptr) memmap.buf;
       iter < cast(uintptr) memmap.buf + memmap.map_s;
       iter += memmap.desc_s) {
     auto desc = cast(MemDesc*) iter;
-    //
+    if(IsAvailable(cast(MemType)desc.type))
+      printk("type: %u, phys: %08lx - %08lx, pages: %lu, attr = %08lx\n",
+             desc.type,
+             desc.physical_start,
+             desc.physical_start + desc.number_of_pages * 4096 - 1,
+             desc.number_of_pages,
+             desc.attribute);
   }
 
-  //SetupSegments();
-  //const ushort kernel_cs = 1 << 3;
-  //const ushort kernel_ss = 2 << 3;
-  //SetDSAll(0);
-  //SetCSSS(kernel_cs, kernel_ss);
-  //SetupIdentityPageTable();
+  // メモリ管理
 
   while(true) asm { hlt; }
 }

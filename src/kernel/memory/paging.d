@@ -1,3 +1,5 @@
+import asmfunc;
+
 private {
   const ulong kPageSize4K = 4096;
   const ulong kPageSize2M = 512 * kPageSize4K;

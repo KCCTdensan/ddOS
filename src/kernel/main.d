@@ -124,7 +124,7 @@ void KernelMain(ref const FBConf fbconf,
   }
 
   // メモリ管理
-  //auto memory_manager = a;
+  auto memory_manager = a;
 
   while(true) asm { hlt; }
 }

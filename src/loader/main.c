@@ -87,6 +87,70 @@ EFI_STATUS OpenGOP(EFI_HANDLE image_handle,EFI_GRAPHICS_OUTPUT_PROTOCOL** gop) {
   return EFI_SUCCESS;
 }
 
+EFI_STATUS ReadFile(EFI_FILE_PROTOCOL* file, VOID** buffer) {
+  EFI_STATUS status;
+  UINTN file_info_size = sizeof(EFI_FILE_INFO) + sizeof(CHAR16) * 12;
+  UINT8 file_info_buf[file_info_size];
+  status = file->GetInfo(
+    file, &gEfiFileInfoGuid, &file_info_size, file_info_buf);
+  if(EFI_ERROR(status)) return status;
+
+  EFI_FILE_INFO* file_info = (EFI_FILE_INFO*)file_info_buf;
+  UINTN file_size = file_info->FileSize;
+
+  status = gBS->AllocatePool(EfiLoaderData, file_size, buffer);
+  if(EFI_ERROR(status)) return status;
+
+  return file->Read(file, &file_size, *buffer);
+}
+
+EFI_STATUS OpenBlockIoProtocolForLoadedImage(
+    EFI_HANDLE image_handle, EFI_BLOCK_IO_PROTOCOL** block_io) {
+  EFI_STATUS status;
+  EFI_LOADED_IMAGE_PROTOCOL* loaded_image;
+
+  status = gBS->OpenProtocol(
+      image_handle,
+      &gEfiLoadedImageProtocolGuid,
+      (VOID**)&loaded_image,
+      image_handle,
+      NULL,
+      EFI_OPEN_PROTOCOL_BY_HANDLE_PROTOCOL);
+  if (EFI_ERROR(status)) {
+    return status;
+  }
+
+  status = gBS->OpenProtocol(
+      loaded_image->DeviceHandle,
+      &gEfiBlockIoProtocolGuid,
+      (VOID**)block_io,
+      image_handle, // agent handle
+      NULL,
+      EFI_OPEN_PROTOCOL_BY_HANDLE_PROTOCOL);
+
+  return status;
+}
+
+EFI_STATUS ReadBlocks(
+      EFI_BLOCK_IO_PROTOCOL* block_io, UINT32 media_id,
+      UINTN read_bytes, VOID** buffer) {
+  EFI_STATUS status;
+
+  status = gBS->AllocatePool(EfiLoaderData, read_bytes, buffer);
+  if (EFI_ERROR(status)) {
+    return status;
+  }
+
+  status = block_io->ReadBlocks(
+      block_io,
+      media_id,
+      0, // start LBA
+      read_bytes,
+      *buffer);
+
+  return status;
+}
+
 EFI_STATUS EFIAPI UefiMain(
     EFI_HANDLE image_handle,
     EFI_SYSTEM_TABLE *system_table){
@@ -108,28 +172,13 @@ EFI_STATUS EFIAPI UefiMain(
   // 画面表示の準備
 
   EFI_GRAPHICS_OUTPUT_PROTOCOL* gop;
-  OpenGOP(image_handle,&gop);
-  struct FBConf fbconf = {
-    (UINT8*)gop->Mode->FrameBufferBase,
-    gop->Mode->Info->PixelsPerScanLine,
-    gop->Mode->Info->HorizontalResolution,
-    gop->Mode->Info->VerticalResolution,
-    0
-  };
-  switch(gop->Mode->Info->PixelFormat){
-    case PixelRedGreenBlueReserved8BitPerColor:
-      fbconf.pixel_fmt = kPixelRGB;
-      break;
-    case PixelBlueGreenRedReserved8BitPerColor:
-      fbconf.pixel_fmt = kPixelBGR;
-      break;
-    default:
-      Print(L"[ !! ] unimplemented pixel format: %d\n",gop->Mode->Info->PixelFormat);
-      Halt();
+  status = OpenGOP(image_handle,&gop);
+  if (EFI_ERROR(status)) {
+    Print(L"[ !! ] failed to open GOP: %r\n", status);
+    Halt();
   }
-  Print(L"[ OK ] resolution: %ux%u\n",fbconf.res_horiz,fbconf.res_vert);
 
-  // カーネルファイルのロード
+  // ファイル
 
   EFI_FILE_PROTOCOL* root_dir;
   status = OpenRootDir(image_handle,&root_dir);
@@ -137,6 +186,8 @@ EFI_STATUS EFIAPI UefiMain(
     Print(L"[ !! ] failed to open root directory: %r\n",status);
     Halt();
   }
+
+  // カーネルファイル
 
   EFI_FILE_PROTOCOL* kernel_file;
   status = root_dir->Open(
@@ -147,28 +198,8 @@ EFI_STATUS EFIAPI UefiMain(
     Halt();
   }
 
-  UINTN kernel_file_info_s = sizeof(EFI_FILE_INFO)+sizeof(CHAR16)*12; // L"\\kernel.elf"分
-  UINT8 kernel_file_info_buf[kernel_file_info_s];
-  status = kernel_file->GetInfo(
-      kernel_file, &gEfiFileInfoGuid,
-      &kernel_file_info_s,kernel_file_info_buf);
-  if(EFI_ERROR(status)){
-    Print(L"[ !! ] failed to get kernel file information: %r\n", status);
-    Halt();
-  }
-  EFI_FILE_INFO* kernel_file_info = (EFI_FILE_INFO*)kernel_file_info_buf;
-  UINTN kernel_file_s = kernel_file_info->FileSize;
-
-  // カーネルのロード
-
-  // ファイルのロード
   VOID* kernel_tmp_buf;
-  status = gBS->AllocatePool(EfiLoaderData,kernel_file_s,&kernel_tmp_buf);
-  if(EFI_ERROR(status)){
-    Print(L"[ !! ] failed to allocate pool: %r\n", status);
-    Halt();
-  }
-  status = kernel_file->Read(kernel_file,&kernel_file_s,kernel_tmp_buf);
+  status = ReadFile(kernel_file, &kernel_tmp_buf);
   if(EFI_ERROR(status)){
     Print(L"[ !! ] failed to read kernel file: %r\n", status);
     Halt();
@@ -205,11 +236,49 @@ EFI_STATUS EFIAPI UefiMain(
         kernel_tail_addr,
         kernel_mem_pages_n);
 
-  // ファイルの開放
+  // 解放
   status = gBS->FreePool(kernel_tmp_buf);
   if(EFI_ERROR(status)){
     Print(L"[ !! ] failed to free pool of kernel file: %r\n",status);
     Halt();
+  }
+
+  // ファイルシステム
+
+  VOID* volume_image;
+
+  EFI_FILE_PROTOCOL* volume_file;
+  status = root_dir->Open(
+      root_dir, &volume_file, L"\\fat_disk",
+      EFI_FILE_MODE_READ, 0);
+  if (status == EFI_SUCCESS) {
+    status = ReadFile(volume_file, &volume_image);
+    if (EFI_ERROR(status)) {
+      Print(L"[ !! ] failed to read volume file: %r", status);
+      Halt();
+    }
+  } else {
+    EFI_BLOCK_IO_PROTOCOL* block_io;
+    status = OpenBlockIoProtocolForLoadedImage(image_handle, &block_io);
+    if (EFI_ERROR(status)) {
+      Print(L"[ !! ] failed to open Block I/O Protocol: %r\n", status);
+      Halt();
+    }
+
+    EFI_BLOCK_IO_MEDIA* media = block_io->Media;
+    UINTN volume_bytes = (UINTN)media->BlockSize * (media->LastBlock + 1);
+    if (volume_bytes > 16 * 1024 * 1024) {
+      volume_bytes = 16 * 1024 * 1024;
+    }
+
+    Print(L"[ OK ] Reading %lu bytes (Present %d, BlockSize %u, LastBlock %u)\n",
+        volume_bytes, media->MediaPresent, media->BlockSize, media->LastBlock);
+
+    status = ReadBlocks(block_io, media->MediaId, volume_bytes, &volume_image);
+    if (EFI_ERROR(status)) {
+      Print(L"[ !! ] failed to read blocks: %r\n", status);
+      Halt();
+    }
   }
 
   // カーネルを実行
@@ -228,12 +297,44 @@ EFI_STATUS EFIAPI UefiMain(
     }
   }
 
-  typedef void EntryPoint(const struct FBConf*,
-                          const struct MemMap*);
-
   UINT64 entry_addr = *(UINT64*)(kernel_head_addr+24);
+
+  struct FBConf fbconf = {
+    (UINT8*)gop->Mode->FrameBufferBase,
+    gop->Mode->Info->PixelsPerScanLine,
+    gop->Mode->Info->HorizontalResolution,
+    gop->Mode->Info->VerticalResolution,
+    0
+  };
+  switch(gop->Mode->Info->PixelFormat){
+    case PixelRedGreenBlueReserved8BitPerColor:
+      fbconf.pixel_fmt = kPixelRGB;
+      break;
+    case PixelBlueGreenRedReserved8BitPerColor:
+      fbconf.pixel_fmt = kPixelBGR;
+      break;
+    default:
+      Print(L"[ !! ] unimplemented pixel format: %d\n",gop->Mode->Info->PixelFormat);
+      Halt();
+  }
+  Print(L"[ OK ] resolution: %ux%u\n",fbconf.res_horiz,fbconf.res_vert);
+
+  VOID* acpi_table = NULL;
+  for (UINTN i = 0; i < system_table->NumberOfTableEntries; ++i) {
+    if (CompareGuid(&gEfiAcpiTableGuid,
+                    &system_table->ConfigurationTable[i].VendorGuid)) {
+      acpi_table = system_table->ConfigurationTable[i].VendorTable;
+      break;
+    }
+  }
+
+  typedef void EntryPoint(const struct FBConf*,
+                          const struct MemMap*,
+                          // const VOID*
+                          VOID*);
   EntryPoint* entry_point = (EntryPoint*)entry_addr;
-  entry_point(&fbconf, &memmap);
+  // entry_point(&fbconf, &memmap, acpi_table, volume_image);
+  entry_point(&fbconf, &memmap, volume_image);
 
   Halt();
   return EFI_SUCCESS;

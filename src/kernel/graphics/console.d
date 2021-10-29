@@ -57,6 +57,8 @@ struct KConsole {
             y = start_y + font_height * cursor_row;
           }
       }
+    // append \0
+    text_buf[cursor_row][cursor_col]='\0';
   }
 
 private:
@@ -67,7 +69,7 @@ private:
     else {
       FillRectangle(pixel_writer, Vec2D(start_x,start_y), Vec2D(buf_x,buf_y), bg_color);
       foreach(cursor_row; 0 .. row-1) {
-        memcpy(text_buf[cursor_row].ptr, text_buf[cursor_row+1].ptr, col); // 怪レい独自の関数
+        memcpy(text_buf[cursor_row].ptr, text_buf[cursor_row+1].ptr, col+1); // 怪レい独自の関数
         uint x = start_x;
         uint y = start_y + font_height * cursor_row;
         foreach(c; text_buf[cursor_row]) {
@@ -83,5 +85,5 @@ private:
   const RGBColor bg_color, text_color;
   const ubyte font_width, font_height;
   const uint col, row, buf_x, buf_y, start_x, start_y;
-  char[KConsole_buf_max_row][KConsole_buf_max_col+1] text_buf;
+  char[KConsole_buf_max_col+1][KConsole_buf_max_row] text_buf;
 }

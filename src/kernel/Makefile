@@ -1,5 +1,5 @@
 TARGET = kernel.elf
-OBJS = main.o asm.o asmfunc.o \
+OBJS = main.o asm.o asmfunc.o error.o \
        lib/string.o \
        graphics/graphics.o graphics/font.o graphics/fontascii.o graphics/console.o \
        memory/memory_map.o memory/segment.o memory/paging.o memory/manager.o \

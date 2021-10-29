@@ -1,5 +1,5 @@
-class KError {
-  public enum Code {
+struct KError {
+  public immutable enum Code {
     kSuccess,
     kFull,
     kEmpty,
@@ -32,7 +32,7 @@ class KError {
     kEndpointNotInCharge,
     EOC // End Of Codes
   }
-  private string[] codestr = [
+  private immutable string[] codestr = [ // CTFE
     "kSuccess",
     "kFull",
     "kEmpty",
@@ -64,6 +64,8 @@ class KError {
     "kFreeTypeError",
     "kEndpointNotInCharge",
   ];
+  static assert(Code.EOC == codestr.length,
+                "symbol enum and string name num doesn't match!!");
 public:
   this(Code code_, string file_, int line_) {
     code = code_;
@@ -98,7 +100,6 @@ unittest {
   assert(Code.EOC == CodeNames.length);
 }
 
-extern(C++)
 struct WithError(T) {
   this(KError e, T d) { data = d; error = e; }
   T data;

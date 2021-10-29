@@ -4,6 +4,7 @@ import lib.string;
 import memory.memory_map;
 import memory.segment;
 import memory.paging;
+import memory.manager;
 import graphics.frame_buffer;
 import graphics.graphics;
 import graphics.console;
@@ -124,7 +125,7 @@ void KernelMain(ref const FBConf fbconf,
   }
 
   // メモリ管理
-  auto memory_manager = a;
+  auto memory_manager = BitmapMemoryManager();
 
   while(true) asm { hlt; }
 }

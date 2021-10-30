@@ -30,17 +30,21 @@ struct KConsole {
     buf_y = font_height * row;
     start_x = x_ + (horiz_ - buf_x) / 2;
     start_y = y_ + (vert_ - buf_y) / 2;
-    // foreach(line;text_buf)line[0]='\0'; // Dなので初期化済み，ありがたい
+    // text_buf; // Dなので初期化済み，ありがたい
 
     FillRectangle(pixel_writer, Vec2D(x_,y_), Vec2D(horiz_,vert_), KConsole_bgc);
     FillRectangle(pixel_writer, Vec2D(start_x,start_y), Vec2D(buf_x,buf_y), bg_color);
   }
   void putStr(string s) {
-    int x = start_x + font_width * cursor_col,
-        y = start_y + font_height * cursor_row;
-    foreach(c; s)
+    x = start_x + font_width * cursor_col,
+    y = start_y + font_height * cursor_row;
+    eachchar: foreach(c; s)
       switch(c) {
+        case '\0':
+          text_buf[cursor_row][cursor_col] = '\0';
+          break eachchar;
         case '\n':
+          text_buf[cursor_row][cursor_col] = '\0';
           putNL();
           x = start_x;
           y = start_y + font_height * cursor_row;
@@ -52,35 +56,36 @@ struct KConsole {
             ++cursor_col;
             x += font_width;
           } else {
+            text_buf[cursor_row][cursor_col+1] = '\0';
             putNL();
             x = start_x;
             y = start_y + font_height * cursor_row;
           }
       }
-    // append \0
-    text_buf[cursor_row][cursor_col]='\0';
+    //text_buf[cursor_row][cursor_col] = '\0';
   }
 
 private:
   void putNL() { // NewLine
-    cursor_col = 0;
-    if(cursor_row < row-1)
+    if(cursor_row < row-1) {
       ++cursor_row;
-    else {
+    } else {
       FillRectangle(pixel_writer, Vec2D(start_x,start_y), Vec2D(buf_x,buf_y), bg_color);
-      foreach(cursor_row; 0 .. row-1) {
-        memcpy(text_buf[cursor_row].ptr, text_buf[cursor_row+1].ptr, col+1); // 怪レい独自の関数
-        uint x = start_x;
-        uint y = start_y + font_height * cursor_row;
-        foreach(c; text_buf[cursor_row]) {
+      foreach(rowi; 0 .. row-1) {
+        memcpy(text_buf[rowi].ptr, text_buf[rowi+1].ptr, col+1);
+        x = start_x,
+        y = start_y + font_height * rowi;
+        foreach(c; text_buf[rowi]) {
+          if(!c) break;
           WriteFont(pixel_writer, x, y, c, text_color);
           x += font_width;
         }
       }
     }
+    cursor_col = 0;
   }
 
-  uint cursor_col, cursor_row, row_index;
+  uint cursor_col, cursor_row, x, y, row_index;
   const PixelWriter* pixel_writer;
   const RGBColor bg_color, text_color;
   const ubyte font_width, font_height;

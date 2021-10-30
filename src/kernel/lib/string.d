@@ -4,8 +4,13 @@ module lib.string;
 int tsprintf(T ...)(char* buf, char* fmt, T args) {
   int len = 0;
   static if(args.length) {
-    int argi = 0, width, size;
-    bool zeroflag;
+    int width, size;
+    bool zeroflag, formatted;
+  }
+  foreach(arg; args) {
+    width = 0;
+    zeroflag = false;
+    formatted = false;
     while(*fmt) {
       if(*fmt == '%') {
         width = 0;
@@ -14,8 +19,8 @@ int tsprintf(T ...)(char* buf, char* fmt, T args) {
 
         // length
         if(*fmt == '0') {
-          ++fmt;
           zeroflag = true;
+          ++fmt;
         }
         if(('0' <= *fmt) && (*fmt <= '9')) {
           width = *fmt++ - '0';
@@ -24,17 +29,20 @@ int tsprintf(T ...)(char* buf, char* fmt, T args) {
         // type
         switch(*fmt) {
           case 'd':
-            size = tsprintf_dec(args[0], buf, zeroflag, width);
+            size = tsprintf_dec(arg, buf, zeroflag, width);
+            formatted = true;
             break;
           case 'x':
-            size = tsprintf_hex(args[0], buf, zeroflag, width);
+            size = tsprintf_hex(arg, buf, zeroflag, width);
+            formatted = true;
             break;
           case 'c':
-            size = tsprintf_chr(cast(char)args[0], buf);
+            size = tsprintf_chr(cast(char)arg, buf);
+            formatted = true;
             break;
-          case 's':
-            size = tsprintf_str(cast(string)args[0], buf);
-            break;
+          //case 's': // まあ要らんやろ (型エラーでコンパイルできない)
+          //  size = tsprintf_str(cast(string)args[0], buf);
+          //  break;
           default: // 謎フォーマットは無視
             *buf++ = *fmt;
             ++len;
@@ -43,16 +51,16 @@ int tsprintf(T ...)(char* buf, char* fmt, T args) {
         buf += size;
         len += size;
         ++fmt;
+        if(formatted) break;
       } else { // 普通の文字
         *buf++ = *fmt++;
         ++len;
       }
     }
-  } else {
-    while(*fmt) {
-      *buf++ = *fmt++;
-      ++len;
-    }
+  }
+  while(*fmt) {
+    *buf++ = *fmt++;
+    ++len;
   }
   *buf = '\0';
   return len;
@@ -154,5 +162,5 @@ int tsprintf_str(string str, char* buf) {
 }
 
 void memcpy(char* to_buf, char* from_buf, size_t n) {
-  foreach(_; 0 .. n) *to_buf++=*from_buf++;
+  foreach(i; 0 .. n) to_buf[i]=from_buf[i];
 }

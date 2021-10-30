@@ -32,7 +32,7 @@ clean:
            */*/*/*.o */*/*/.*.d
 
 kernel.elf: $(OBJS) Makefile
-	ld.lld $(LDFLAGS) -o kernel.elf $(OBJS) -lc -lc++ #-lc++abi #-lm -lfreetype
+	ld.lld $(LDFLAGS) -o kernel.elf $(OBJS) -lc #-lc++ -lc++abi #-lm -lfreetype
 
 %.o: %.d Makefile
 	ldc2 $(LDCFLAGS) -c $< --of=$@

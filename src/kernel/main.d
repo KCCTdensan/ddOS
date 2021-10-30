@@ -114,18 +114,18 @@ void KernelMain(ref const FBConf fbconf,
   }
 
   // メモリマップ
-  printk("memory_map: %p\n", &memmap);
+  printk("memory_map: 0x%x\n", cast(uint)&memmap);
   for(auto iter = cast(uintptr) memmap.buf;
       iter < cast(uintptr) memmap.buf + memmap.map_s;
       iter += memmap.desc_s) {
     auto desc = cast(MemDesc*) iter;
-    if(IsAvailable(cast(MemType)desc.type))
-      printk("type: %u, phys: %08lx - %08lx, pages: %lu, attr = %08lx\n",
-             desc.type,
-             desc.physical_start,
-             desc.physical_start + desc.number_of_pages * 4096 - 1,
-             desc.number_of_pages,
-             desc.attribute);
+    //if(IsAvailable(cast(MemType)desc.type))
+    //  printk("type: %d, phys: %08x - %08x, pages: %d, attr = %08x\n",
+    //         desc.type,
+    //         desc.physical_start,
+    //         desc.physical_start + desc.number_of_pages * 4096 - 1,
+    //         desc.number_of_pages,
+    //         desc.attribute);
   }
 
   // メモリ管理

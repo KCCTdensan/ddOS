@@ -178,6 +178,26 @@ EFI_STATUS EFIAPI UefiMain(
     Halt();
   }
 
+  struct FBConf fbconf = {
+    (UINT8*)gop->Mode->FrameBufferBase,
+    gop->Mode->Info->PixelsPerScanLine,
+    gop->Mode->Info->HorizontalResolution,
+    gop->Mode->Info->VerticalResolution,
+    0
+  };
+  switch(gop->Mode->Info->PixelFormat){
+    case PixelRedGreenBlueReserved8BitPerColor:
+      fbconf.pixel_fmt = kPixelRGB;
+      break;
+    case PixelBlueGreenRedReserved8BitPerColor:
+      fbconf.pixel_fmt = kPixelBGR;
+      break;
+    default:
+      Print(L"[ !! ] unimplemented pixel format: %d\n",gop->Mode->Info->PixelFormat);
+      Halt();
+  }
+  Print(L"[ OK ] resolution: %ux%u\n",fbconf.res_horiz,fbconf.res_vert);
+
   // ファイル
 
   EFI_FILE_PROTOCOL* root_dir;
@@ -298,26 +318,6 @@ EFI_STATUS EFIAPI UefiMain(
   }
 
   UINT64 entry_addr = *(UINT64*)(kernel_head_addr+24);
-
-  struct FBConf fbconf = {
-    (UINT8*)gop->Mode->FrameBufferBase,
-    gop->Mode->Info->PixelsPerScanLine,
-    gop->Mode->Info->HorizontalResolution,
-    gop->Mode->Info->VerticalResolution,
-    0
-  };
-  switch(gop->Mode->Info->PixelFormat){
-    case PixelRedGreenBlueReserved8BitPerColor:
-      fbconf.pixel_fmt = kPixelRGB;
-      break;
-    case PixelBlueGreenRedReserved8BitPerColor:
-      fbconf.pixel_fmt = kPixelBGR;
-      break;
-    default:
-      Print(L"[ !! ] unimplemented pixel format: %d\n",gop->Mode->Info->PixelFormat);
-      Halt();
-  }
-  Print(L"[ OK ] resolution: %ux%u\n",fbconf.res_horiz,fbconf.res_vert);
 
   VOID* acpi_table = NULL;
   for (UINTN i = 0; i < system_table->NumberOfTableEntries; ++i) {

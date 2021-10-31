@@ -71,7 +71,7 @@ void KernelMain(ref const FBConf fbconf,
   void printk(T ...)(string fmt, T args) {
     static if(args.length) {
       char[1024] buf = void;
-      tsprintf!T(buf.ptr, cast(char*)fmt.ptr, args);
+      tsprintf!T(buf.ptr, 1024, cast(char*)fmt.ptr, args);
       (&kernel_console).putStr(cast(string)buf);
     } else {
       (&kernel_console).putStr(fmt);
@@ -119,13 +119,13 @@ void KernelMain(ref const FBConf fbconf,
       iter < cast(uintptr) memmap.buf + memmap.map_s;
       iter += memmap.desc_s) {
     auto desc = cast(MemDesc*) iter;
-    //if(IsAvailable(cast(MemType)desc.type))
-    //  printk("type: %d, phys: %08x - %08x, pages: %d, attr = %08x\n",
-    //         desc.type,
-    //         desc.physical_start,
-    //         desc.physical_start + desc.number_of_pages * 4096 - 1,
-    //         desc.number_of_pages,
-    //         desc.attribute);
+    if(IsAvailable(cast(MemType)desc.type))
+      printk("type: %d, phys: %08x - %08x, pages: %d, attr = %08x\n",
+             desc.type,
+             desc.physical_start,
+             desc.physical_start + desc.number_of_pages * 4096 - 1,
+             desc.number_of_pages,
+             desc.attribute);
   }
 
   // メモリ管理

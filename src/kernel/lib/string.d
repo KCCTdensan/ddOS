@@ -1,15 +1,13 @@
 module lib.string;
 
 // tiny sprintf
-int tsprintf(T ...)(char* buf, char* fmt, T args) {
+int tsprintf(T ...)(char* buf, size_t buf_size, char* fmt, T args) {
   int len = 0;
   static if(args.length) {
     int width, size;
     bool zeroflag, formatted;
   }
   foreach(arg; args) {
-    width = 0;
-    zeroflag = false;
     formatted = false;
     while(*fmt) {
       if(*fmt == '%') {
@@ -34,6 +32,10 @@ int tsprintf(T ...)(char* buf, char* fmt, T args) {
             break;
           case 'x':
             size = tsprintf_hex(arg, buf, zeroflag, width);
+            formatted = true;
+            break;
+          case 'b':
+            size = tsprintf_bin(arg, buf, zeroflag, width);
             formatted = true;
             break;
           case 'c':
@@ -85,17 +87,25 @@ int tsprintf_dec(const long val,
     } else {
       abs = val;
     }
-    while(abs) {
-      *tmpp-- = abs % 10 + '0';
-      abs /= 10;
-      ++len;
+    if(width) {
+      while(len < width && abs) {
+        *tmpp-- = abs % 10 + '0';
+        abs /= 10;
+        ++len;
+      }
+    } else {
+      while(abs) {
+        *tmpp-- = abs % 10 + '0';
+        abs /= 10;
+        ++len;
+      }
     }
   }
 
   // 0のpaddingとマイナス記号
   if(zeroflag) {
     if(minus) --width; // 記号分
-    while(len<width) {
+    while(len < width) {
       *tmpp-- = '0';
       ++len;
     }
@@ -108,7 +118,7 @@ int tsprintf_dec(const long val,
       *tmpp-- = '-';
       ++len;
     }
-    while(len<width) {
+    while(len < width) {
       *tmpp-- = ' ';
       ++len;
     }
@@ -129,16 +139,73 @@ int tsprintf_hex(ulong val,
     *tmpp-- = '0';
     ++len;
   } else {
-    while(val) {
-      *tmpp = val % 16;
-      if(*tmpp < 10) {
-        *tmpp += '0';
-      } else {
-        *tmpp += 'a' - 10;
+    if(width) {
+      while(len < width && val) {
+        *tmpp = val % 16;
+        val /= 16; // コンパイラが(>>=4とかに)最適化してくれる
+        if(*tmpp < 10) {
+          *tmpp += '0';
+        } else {
+          *tmpp += 'a' - 10;
+        }
+        --tmpp;
+        ++len;
       }
-      val /= 16; // コンパイラが(>>=4とかに)最適化してくれる
-      --tmpp;
-      ++len;
+    } else {
+      while(val) {
+        *tmpp = val % 16;
+        val /= 16;
+        if(*tmpp < 10) {
+          *tmpp += '0';
+        } else {
+          *tmpp += 'a' - 10;
+        }
+        --tmpp;
+        ++len;
+      }
+    }
+  }
+
+  while(len < width) {
+    *tmpp-- = zeroflag ? '0' : ' ';
+    ++len;
+  }
+
+  memcpy(buf, ++tmpp, len);
+  return len;
+}
+// binary
+int tsprintf_bin(ulong val,
+                 char* buf,
+                 const bool zeroflag,
+                 const int width) {
+  int len = 0,d16;
+  char[8] tmp;
+  char* tmpp = &tmp[$-1];
+  if(val == 0) {
+    *tmpp-- = '0';
+    ++len;
+  } else {
+    if(width) {
+      while(len < width && val) {
+        d16 = val % 16;
+        val /= 16;
+        *tmpp-- = (d16 & 0b0001) ? '1' : '0';
+        *tmpp-- = (d16 & 0b0010) ? '1' : '0';
+        *tmpp-- = (d16 & 0b0100) ? '1' : '0';
+        *tmpp-- = (d16 & 0b1000) ? '1' : '0';
+        len+=4;
+      }
+    } else {
+      while(val) {
+        d16 = val % 16;
+        val /= 16;
+        *tmpp-- = (d16 & 0b0001) ? '1' : '0';
+        *tmpp-- = (d16 & 0b0010) ? '1' : '0';
+        *tmpp-- = (d16 & 0b0100) ? '1' : '0';
+        *tmpp-- = (d16 & 0b1000) ? '1' : '0';
+        len+=4;
+      }
     }
   }
 
